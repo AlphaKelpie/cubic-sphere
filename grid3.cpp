@@ -6,12 +6,13 @@
 #include <iostream>
 #include <random>
 
-Grid3::Grid3(Interval x, Interval y, Interval z)
+Grid3::Grid3(Interval x, Interval y, Interval z, double T, double h)
 	: _nPoints{0},
 		_projection{nullptr},
 		_neighbour{nullptr},
-		_h{0.1},
-		_delta{1.1 * sqrt(3) * _h}
+    _t{T/4},
+		_h{h},
+		_delta{1.1 * sqrt(3) * h}
 {
 	int xPoints = (x.max - x.min) / _h;
 	int yPoints = (y.max - y.min) / _h;
@@ -164,8 +165,33 @@ void Grid3::saveRho(std::string filename) {
   fout.close();
 }
 
-void Grid3::evolve(double dt = 0) {
+void Grid3::evolve(double dt) {
+  if (dt == 0) {
+    dt = 0.1 * _h * _h * _h;
+  }
 
+  Function nextRho = Function(_nPoints);
+
+  double deltaRho = 0.;
+  for (int idx = 0; idx < _nPoints; ++idx) {
+    Point p = _volume[idx];
+
+    for (int j = 0; j < 3; ++j) {
+      deltaRho = p[j] * (1 - 3) * der1(idx, j);
+      for (int i = 0; i < 3; ++i) {
+        if (i == j) {
+          deltaRho += p.D(i) * der2(idx, i);
+        } else {
+          deltaRho += p.D(i, j) * derij(idx, i, j);
+        }
+      }
+    }
+
+    deltaRho *= _t * dt;
+    nextRho[idx] = _rho[idx] + deltaRho;
+  }
+
+  _rho = nextRho;
 }
 
 void Grid3::project() {
@@ -324,20 +350,20 @@ bool Grid3::loadMap(std::string filename) {
   return true;
 }
 
-double Grid3::der1(int pointIndex, char direction) {
+double Grid3::der1(int pointIndex, int direction) {
   Neighbours& near = _neighbour[pointIndex];
 
   double result = 0.;
 
-  switch (direction)
+  switch (direction + 1)
   {
-  case 'x':
+  case 1: //x
     result = (_rho[near.point[2]] - _rho[near.point[1]]);
     break;
-  case 'y':
+  case 2: //y
     result = (_rho[near.point[4]] - _rho[near.point[3]]);
     break;
-  case 'z':
+  case 3: //z
     result = (_rho[near.point[6]] - _rho[near.point[5]]);
     break;
   default:
@@ -350,20 +376,20 @@ double Grid3::der1(int pointIndex, char direction) {
 
 }
 
-double Grid3::der2(int pointIndex, char direction) {
+double Grid3::der2(int pointIndex, int direction) {
   Neighbours& near = _neighbour[pointIndex];
 
   double result = 0.;
 
-  switch (direction)
+  switch (direction + 1)
   {
-  case 'x':
+  case 1: //xx
     result = _rho[near.point[2]] + _rho[near.point[1]];
     break;
-  case 'y':
+  case 2: //yy
     result = _rho[near.point[4]] + _rho[near.point[3]];
     break;
-  case 'z':
+  case 3: //zz
     result = _rho[near.point[6]] + _rho[near.point[5]];
     break;
   default:
@@ -376,43 +402,29 @@ double Grid3::der2(int pointIndex, char direction) {
   return result / (_h * _h);
 }
 
-double Grid3::derij(int pointIndex, std::string directions) {
+double Grid3::derij(int pointIndex, int dir1, int dir2) {
   Neighbours near = _neighbour[pointIndex];
 
   double result = 0.;
 
-  if (directions.size() != 2) {
-    throw std::invalid_argument(
-      "Error: derij directions must be size 2: " + directions);
-  }
-  if (directions.find('x') != std::string::npos) {
-    if (directions.find('y') != std::string::npos) {
-      // xy || yx
+  switch ((dir1 + 1) * (dir2 + 1))
+  {
+  case 2: //xy || yx
       result = _rho[near.point[16]] - _rho[near.point[15]] -
                _rho[near.point[8]] + _rho[near.point[7]];
-    } else if (directions.find('z') != std::string::npos) {
-      // xz || zx
+    break;
+  case 3: //xz || zx
       result = _rho[near.point[18]] - _rho[near.point[17]] -
                _rho[near.point[10]] + _rho[near.point[9]];
-    } else {
-      throw std::invalid_argument(
-        "Error: derij directions has 'x' and an invalid character: " +
-        directions);
-    }
-  }
-  else if (directions.find('y') != std::string::npos) {
-    if (directions.find('z') != std::string::npos) {
-      // yz || zy
+    break;
+  case 6: //yz || zy
       result = _rho[near.point[14]] - _rho[near.point[13]] -
                _rho[near.point[12]] + _rho[near.point[11]];
-    } else {
-      throw std::invalid_argument(
-        "Error: derij directions has 'y', not 'x' and an invalid character: " +
-        directions);
-    }
-  } else {
+    break;
+  default:
     throw std::invalid_argument(
-      "Error: derij directions has neither 'x' or 'y': " + directions);
+      "Error: invalid direction in derij function: " + dir1 + ' ' + dir2);
+    break;
   }
 
   return result / (_h * _h * 4);

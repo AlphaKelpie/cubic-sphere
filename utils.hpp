@@ -29,6 +29,34 @@ struct Point
     os << '(' << obj.x << ", " << obj.y << ", " << obj.z << ')';
     return os;
   }
+
+  double operator[](int coordinate) {
+    switch (coordinate)
+    {
+    case 0:
+      return x;
+      break;
+    case 1:
+      return y;
+      break;
+    case 2:
+      return z;
+      break;
+    
+    default:
+      throw std::invalid_argument(
+        "operator[] accepts only [0, 1, 2], provided " + coordinate);
+      break;
+    }
+  }
+
+  double D(int i) {
+    return x*x + y*y + z*z - this->operator[](i)*this->operator[](i);
+  }
+
+  double D(int i, int j) {
+    return -this->operator[](i) * this->operator[](j);
+  }
 };
   
 inline double absolute(double x) {
