@@ -2,16 +2,13 @@
 #define GRID3_H
 
 #include "surface.h"
-#include <algorithm>
-#include <chrono>
-#include <fstream>
-#include <iostream>
+#include "function.h"
 
 class Grid3 {
     private:
     // Neighbours structure
     struct Neighbours {
-        int point[7];
+        int point[19];
     };
 
     // num of points
@@ -21,14 +18,14 @@ class Grid3 {
     // points on the surface
     // Surface _sphere;
     // density
-    double* _rho;
+    Function _rho;
 
     // 8 grid points around projection of each point:
     // first: array of index in _s of the points
     // second: array of weights
     std::pair<int[8], double[8]>* _projection;
 
-    // 7 grid points around each point and itself
+    // 19 grid points around each point and itself
     Neighbours* _neighbour;
 
     double _h;
@@ -48,12 +45,29 @@ class Grid3 {
 
     private:
     double phi(double x, double y, double z);
+
+    //create the first rho value
+    void createRho();
+
+    //set the first values of _rho
+    void fillFirstRho();
+
     void createProjection();
+
     //return the point on the surface which is closest to given point
     Point closest(Point const& p);
+
     //load the map between each surface point 'p' and the interpolation(closest(neighbour(p))).
     //Returns false if file is not found.
     bool loadMap(std::string filename = "map.dat");
+
+    double der1(int pointIndex, char direction);
+
+    double der2(int pointIndex, char direction);
+
+    double derij(int pointIndex, std::string directions);
+
+    int Grid3::sgn(int val1, int val2);
 };
 
 #endif
