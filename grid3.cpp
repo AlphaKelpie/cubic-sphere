@@ -14,15 +14,14 @@ Grid3::Grid3(Interval x, Interval y, Interval z, double T, double h)
 		_h{h},
 		_delta{1.1 * sqrt(3) * h}
 {
-	int xPoints = (x.max - x.min) / _h;
-	int yPoints = (y.max - y.min) / _h;
-	int zPoints = (z.max - z.min) / _h;
+	int xPoints = (x.max - x.min) / _h + 1;
+	int yPoints = (y.max - y.min) / _h + 1;
+	int zPoints = (z.max - z.min) / _h + 1;
 	_nPoints = xPoints * yPoints * zPoints;
 
-	// int spoints = 0;
 	// Create surface and get _nPoints
 	Point* temp = new Point[_nPoints];
-	// Point* temp_s = new Point[_nPoints];
+
 	_neighbour = new Neighbours[_nPoints];
 
 	//for every point of the descrete domain..
@@ -33,13 +32,13 @@ Grid3::Grid3(Interval x, Interval y, Interval z, double T, double h)
 	int right;
 	int left;
   int index = 0;
-	for (double i = x.min; i < x.max; i+=_h) {
+	for (double i = x.min; i < x.max + 1E-3; i+=_h) {
 		left = (i <= x.min) ? -1 : 1;
 		right = (i >= x.max - _h) ? -1 : 1;
-		for (double j = y.min; j < y.max; j+=_h) {
+		for (double j = y.min; j < y.max + 1E-3; j+=_h) {
 			front = (j <= y.min) ? -1 : 1;
 			behind = (j >= y.max - _h) ? -1 : 1;
-			for (double k = z.min; k < z.max; k+=_h) {
+			for (double k = z.min; k < z.max + 1E-3; k+=_h) {
 				down = (k <= z.min) ? -1 : 1;
 				top = (k >= z.max - _h) ? -1 : 1;
 				//..add it to the volume and..
@@ -90,9 +89,7 @@ Grid3::Grid3(Interval x, Interval y, Interval z, double T, double h)
   }
 
 	_volume = Surface(_nPoints, temp);
-	// _sphere = Surface(spoints, temp_s);
 	delete[] temp;
-	// delete[] temp_s;
 
 	createProjection();
 	createRho();
@@ -239,7 +236,7 @@ void Grid3::project() {
 
 double Grid3::phi(double x, double y, double z) {
   //default function: a sphere centred in (5,5,5) with r=4.5
-  return std::sqrt((x-5)*(x-5) + (y-5)*(y-5) + (z-5)*(z-5)) - 4.5;
+  return std::sqrt((x-.5)*(x-.5) + (y-.5)*(y-.5) + (z-.5)*(z-.5)) - .25;
 }
 
 void Grid3::createRho() {
@@ -255,7 +252,7 @@ void Grid3::createRho() {
 
 void Grid3::fillFirstRho() {
   std::random_device seed;
-  std::cout << "Debug: seed = " << seed() << '\n';
+  // std::cout << "Debug: seed = " << seed() << '\n';
   std::mt19937 gen(seed());
   std::uniform_int_distribution<int> init(0, _nPoints);
   int start_point = init(gen);
@@ -272,14 +269,14 @@ void Grid3::createProjection() {
   _projection = new std::pair<int[8], double[8]>[_nPoints];
   for (int i = 0; i < _nPoints; ++i) {
     Point c = closest(_volume[i]);
-    
+
     //find the left-front-down grid point nearest to c
     double x0 = (int)(c.x/_h) *_h;
     double y0 = (int)(c.y/_h) *_h;
     double z0 = (int)(c.z/_h) *_h;
 
     //find the indexes of the cubic nearest points to c
-      for (int k = 0; k < _nPoints; ++k) {
+    for (int k = 0; k < _nPoints; ++k) {
       Point s = _volume[k];
       
       if      (s == Point{x0,    y0,    z0   })   _projection[i].first[0] = k;
@@ -314,7 +311,6 @@ void Grid3::createProjection() {
 }
 
 Point Grid3::closest(Point const& p) {
-
   double x = p.x;
   double y = p.y;
   double z = p.z;
@@ -489,16 +485,16 @@ double Grid3::derij(int pointIndex, int dir1, int dir2) {
   switch ((dir1 + 1) * (dir2 + 1))
   {
   case 2: //xy || yx
-      result = _rho[near.point[16]] - _rho[near.point[15]] -
-               _rho[near.point[8]] + _rho[near.point[7]];
+    result = _rho[near.point[16]] - _rho[near.point[15]] -
+      _rho[near.point[8]] + _rho[near.point[7]];
     break;
   case 3: //xz || zx
-      result = _rho[near.point[18]] - _rho[near.point[17]] -
-               _rho[near.point[10]] + _rho[near.point[9]];
+    result = _rho[near.point[18]] - _rho[near.point[17]] -
+      _rho[near.point[10]] + _rho[near.point[9]];
     break;
   case 6: //yz || zy
-      result = _rho[near.point[14]] - _rho[near.point[13]] -
-               _rho[near.point[12]] + _rho[near.point[11]];
+    result = _rho[near.point[14]] - _rho[near.point[13]] -
+      _rho[near.point[12]] + _rho[near.point[11]];
     break;
   default:
     throw std::invalid_argument(
