@@ -93,14 +93,15 @@ Grid3::Grid3(Interval x, Interval y, Interval z, double T, double h)
 	createRho();
 }
 
-Grid3::Grid3(std::string mapFile)
+Grid3::Grid3(std::string surfFile, std::string relFile, double T)
 	: _nPoints{0},
-		_projection{nullptr},
-		_volume{Surface()}
-	//   _sphere{Surface()}
+    _t{T/4}
 {
-	if (!loadMap(mapFile)) {
-		throw std::runtime_error{"loadMap() cannot open file."};
+  if (!loadSurface(surfFile)) {
+		throw std::runtime_error{"loadSurface() cannot open file."};
+  }
+	if (!loadRelations(relFile)) {
+		throw std::runtime_error{"loadRelation() cannot open file."};
 	}
 	createRho();
 }
@@ -111,16 +112,16 @@ Grid3::~Grid3() {
 }
 
 void Grid3::saveRelations(std::string filename) {
-	//format: 1 row _h and _nPoints
+	// format:
+  // first row: _nPoints
 	// 1 row per point to _projection: index and weight for the 8 grid
 	// points around
-	// 1 row per point to _neighbour indexes: itself top down behind
-	// front right left
+	// 1 row per point to _neighbour indexes (19 int)
 
-	std::cout << "Saving h, nPoints, projection and neighbour...     ";
-	std::fstream fout(filename, std::ios::out);
+	std::cout << "Saving nPoints, projection and neighbour...     ";
+	std::fstream fout(filename + "_pn.dat", std::ios::out);
 
-	fout << _h << ' ' << _nPoints << "\n\n";
+	fout << _nPoints << "\n\n";
 
 	for (int i = 0; i < _nPoints; ++i) {
 		for (int j = 0; j < 8; ++j) {
@@ -144,25 +145,43 @@ void Grid3::saveRelations(std::string filename) {
 }
 
 void Grid3::saveSurface(std::string filename) {
+  // format:
+  // first row: _nPoints _h
+  // 1 row per point in _volume
+
   std::cout << "Saving surface...     ";
   if (_volume.nPoints() == 0) {
     std::cerr << "Error, cannot save surface of a simulation created from a map.\n";
     return;
   }
 
-  std::fstream fout(filename, std::ios::out);
-  fout << _volume;
-  fout.close();
+  std::fstream fout(filename + "_s.dat", std::ios::out);
 
+  fout << _nPoints << ' ' << _h << "\n\n";
+
+  fout << _volume;
+
+  fout.close();
   std::cout << "Done!\n";
 }
 
 void Grid3::saveRho(std::string filename) {
-  std::fstream fout(filename, std::ios::out);
-  for (int i = 0; i < _nPoints; ++i)
+  // format:
+  // first row: _nPoints
+  // 1 row per _rho value
+
+  std::cout << "Saving rho...     ";
+
+  std::fstream fout(filename + "_r.dat", std::ios::out);
+
+  fout << _nPoints << "\n\n";
+
+  for (int i = 0; i < _nPoints; ++i) {
     fout << _rho[i] << '\n';
+  }
 
   fout.close();
+  std::cout << "Done!\n";
 }
 
 void Grid3::evolve(double dt) {
@@ -244,18 +263,17 @@ void Grid3::fillFirstRho() {
 
 void Grid3::createProjection() {
   auto start_time = std::chrono::high_resolution_clock::now();
-  std::cout << "Constructing map...     ";
+  std::cout << "Constructing projection...     ";
   _projection = new std::pair<int[8], double[8]>[_nPoints];
   for (int i = 0; i < _nPoints; ++i) {
     Point c = closest(_volume[i]);
     
-    //(A)  find the indexes of the 8 surface points surrounding the closest point of point[i]:
-    //(A1) find the points (actually, only the left-front-down)
+    //find the left-front-down grid point nearest to c
     double x0 = (int)(c.x/_h) *_h;
     double y0 = (int)(c.y/_h) *_h;
     double z0 = (int)(c.z/_h) *_h;
 
-      //(A2) find their indexes in _volume
+    //find the indexes of the cubic nearest points to c
       for (int k = 0; k < _nPoints; ++k) {
       Point s = _volume[k];
       
@@ -269,7 +287,7 @@ void Grid3::createProjection() {
       else if (s == Point{x0+_h, y0+_h, z0+_h})   _projection[i].first[7] = k;
     }
 
-    //(B) find the weights of the interpolation
+    //find the weights of the interpolation
     double xd = (c.x - x0) /_h;
     double yd = (c.y - y0) /_h;
     double zd = (c.z - z0) /_h;
@@ -320,16 +338,46 @@ Point Grid3::closest(Point const& p) {
   return r;
 }
 
-bool Grid3::loadMap(std::string filename) {
-  std::cout << "Loading map...     ";
-  std::fstream fin(filename, std::ios::in);
+bool Grid3::loadSurface(std::string filename) {
+  std::cout << "Loading surface...     ";
+  std::fstream fin(filename + "_s.dat", std::ios::in);
   if (!fin.is_open()) {
-    std::cerr << "Error. Projection file '"<< filename << "' couldn't be opened.\n";
+    std::cerr << "Error. Surface file '"<< filename << "' couldn't be opened.\n";
     return false;
   }
 
-  fin >> _h;
   fin >> _nPoints;
+  fin >> _h;
+
+  Point* temp = new Point[_nPoints];
+  for (int i = 0; i < _nPoints; ++i) {
+    fin >> temp[i].x;
+    fin >> temp[i].y;
+    fin >> temp[i].z;
+  }
+
+  _volume = Surface(_nPoints, temp);
+  delete[] temp;
+
+  fin.close();
+  std::cout << "Done.\n";
+  return true;
+}
+
+bool Grid3::loadRelations(std::string filename) {
+  std::cout << "Loading relations...     ";
+  std::fstream fin(filename + "_pn.dat", std::ios::in);
+  if (!fin.is_open()) {
+    std::cerr << "Error. Relations file '"<< filename << "' couldn't be opened.\n";
+    return false;
+  }
+
+  int nPoints;
+  fin >> nPoints;
+  if (_nPoints != nPoints) {
+    std::cerr << "Error: Relations file has different number of points of surface.\n";
+    return false;
+  }
 
   _projection = new std::pair<int[8], double[8]>[_nPoints];
   for (int i = 0; i < _nPoints; ++i) {
@@ -346,6 +394,32 @@ bool Grid3::loadMap(std::string filename) {
     }
   }
 
+  fin.close();
+  std::cout << "Done.\n";
+  return true;
+}
+
+bool Grid3::loadRho(std::string filename) {
+  std::cout << "Loading rho...     ";
+  std::fstream fin(filename + "_r.dat", std::ios::in);
+  if (!fin.is_open()) {
+    std::cerr << "Error. Rho file '"<< filename << "' couldn't be opened.\n";
+    return false;
+  }
+
+  int nPoints;
+  fin >> nPoints;
+  if (_nPoints != nPoints) {
+    std::cerr << "Error: Rho file has different number of points of surface.\n";
+    return false;
+  }
+
+  _rho = Function(_nPoints);
+  for (int i = 0; i < _nPoints; ++i) {
+    fin >> _rho[i];
+  }
+
+  fin.close();
   std::cout << "Done.\n";
   return true;
 }
