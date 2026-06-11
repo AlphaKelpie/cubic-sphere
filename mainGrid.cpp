@@ -10,13 +10,13 @@ int main() {
       Grid3 g({0.,1.}, {0.,1.}, {0.,1.}, 40, .1);
 
       std::cout << "Saving\n";
-      g.saveRelations("test");
-      g.saveRho("init");
-      g.saveSurface("test");
+      g.saveRelations("./data/test");
+      g.saveRho("./data/init");
+      g.saveSurface("./data/test");
     }
 
     std::cout << "Loading\n";
-    Grid3 g("test", "test", 40.);
+    Grid3 g("./data/test", "./data/test", 40.);
 
     std::cout << "Evolving\n";
     for (int step = 1; step < 2; step+=100) {
@@ -25,11 +25,11 @@ int main() {
         std::cout << sim << ' ' << std::flush;
         g.evolve();
       }
-      g.saveRho("evolving");
+      g.saveRho("./data/evolving");
     }
 
     g.project();
-    g.saveRho("evolved");
+    g.saveRho("./data/evolved");
 
     std::cout << "End\n";
     return 0;
