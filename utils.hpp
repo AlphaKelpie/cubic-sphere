@@ -4,20 +4,20 @@
 #include <ostream>
 
 struct Interval {
-  double min;
-  double max;
+  float min;
+  float max;
 };
 
 struct Point
 {
-  double x = 0;
-  double y = 0;
-  double z = 0;
+  float x = 0;
+  float y = 0;
+  float z = 0;
 
   friend bool operator==(const Point& lhs, const Point& rhs) {
-    /*if(std::abs(lhs.x-rhs.x) < std::numeric_limits<double>::epsilon() &&
-     std::abs(lhs.y-rhs.y) < std::numeric_limits<double>::epsilon() &&
-     std::abs(lhs.z-rhs.z) < std::numeric_limits<double>::epsilon()) {
+    /*if(std::abs(lhs.x-rhs.x) < std::numeric_limits<float>::epsilon() &&
+     std::abs(lhs.y-rhs.y) < std::numeric_limits<float>::epsilon() &&
+     std::abs(lhs.z-rhs.z) < std::numeric_limits<float>::epsilon()) {
     */
     if(std::abs(lhs.x-rhs.x) <= 1E-14 && std::abs(lhs.y-rhs.y) <= 1E-14 && std::abs(lhs.z-rhs.z) <= 1E-14)
       return true;
@@ -30,7 +30,7 @@ struct Point
     return os;
   }
 
-  double operator[](int coordinate) {
+  float operator[](int coordinate) {
     switch (coordinate)
     {
     case 0:
@@ -50,16 +50,16 @@ struct Point
     }
   }
 
-  double D(int i) {
+  float D(int i) {
     return x*x + y*y + z*z - this->operator[](i)*this->operator[](i);
   }
 
-  double D(int i, int j) {
+  float D(int i, int j) {
     return -this->operator[](i) * this->operator[](j);
   }
 };
   
-inline double absolute(double x) {
+inline float absolute(float x) {
   if (x < 0)
     return -x;
   return x;

@@ -7,14 +7,14 @@ Function::Function() : _nPoints{0}, _f{nullptr} {}
 
 Function::Function(int np)
   : _nPoints{np},
-    _f{new double[np]}
+    _f{new float[np]}
 {
   std::fill(_f, _f + np, 0.);
 }
 
 Function::Function(const Function &src)
   : _nPoints{src._nPoints},
-    _f{new double[_nPoints]}
+    _f{new float[_nPoints]}
 {
   std::copy(src._f, src._f + src._nPoints, _f);
 }
@@ -32,7 +32,7 @@ Function& Function::operator=(const Function &src) {
   if (this == &src) { return *this; }
 
   if (_nPoints != src._nPoints) {           // resource in *this cannot be reused
-    double* temp = new double[src._nPoints];  // allocate resource, if throws, do nothing
+    float* temp = new float[src._nPoints];  // allocate resource, if throws, do nothing
     delete[] _f;                         // release resource in *this
     _f = temp;
     _nPoints = src._nPoints;
@@ -59,7 +59,7 @@ Function::~Function() {
   delete[] _f;
 }
 
-double Function::operator[](int idx) const {
+float Function::operator[](int idx) const {
   if (idx >= _nPoints) {
     throw std::out_of_range("Error: invalid index in Function");
   }
@@ -67,18 +67,18 @@ double Function::operator[](int idx) const {
   return _f[idx];
 }
 
-double& Function::operator[](int idx) {
+float& Function::operator[](int idx) {
   if (idx >= _nPoints) {
     throw std::out_of_range("Error: invalid index in Function");
   }
   if (idx < 0) {
-    static double zero = 0.;
+    static float zero = 0.;
     return zero;
   }
   return _f[idx];
 }
 
-double* Function::f() const {
+float* Function::f() const {
   return _f;
 }
 

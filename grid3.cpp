@@ -6,13 +6,13 @@
 #include <iostream>
 #include <random>
 
-Grid3::Grid3(Interval x, Interval y, Interval z, double T, double h)
+Grid3::Grid3(Interval x, Interval y, Interval z, float T, float h)
 	: _nPoints{0},
 		_projection{nullptr},
 		_neighbour{nullptr},
     _t{T/4},
 		_h{h},
-		_delta{1.1 * sqrt(3) * h}
+		_delta{(float)1.1 * (float)sqrt(3) * h}
 {
 	int xPoints = (x.max - x.min) / _h + 1;
 	int yPoints = (y.max - y.min) / _h + 1;
@@ -32,13 +32,13 @@ Grid3::Grid3(Interval x, Interval y, Interval z, double T, double h)
 	int right;
 	int left;
   int index = 0;
-	for (double i = x.min; i < x.max + 1E-3; i+=_h) {
+	for (float i = x.min; i < x.max + 1E-3; i+=_h) {
 		left = (i <= x.min) ? -1 : 1;
 		right = (i >= x.max - _h) ? -1 : 1;
-		for (double j = y.min; j < y.max + 1E-3; j+=_h) {
+		for (float j = y.min; j < y.max + 1E-3; j+=_h) {
 			front = (j <= y.min) ? -1 : 1;
 			behind = (j >= y.max - _h) ? -1 : 1;
-			for (double k = z.min; k < z.max + 1E-3; k+=_h) {
+			for (float k = z.min; k < z.max + 1E-3; k+=_h) {
 				down = (k <= z.min) ? -1 : 1;
 				top = (k >= z.max - _h) ? -1 : 1;
 				//..add it to the volume and..
@@ -95,7 +95,7 @@ Grid3::Grid3(Interval x, Interval y, Interval z, double T, double h)
 	createRho();
 }
 
-Grid3::Grid3(std::string surfFile, std::string relFile, double T)
+Grid3::Grid3(std::string surfFile, std::string relFile, float T)
 	: _nPoints{0},
     _t{T/4}
 {
@@ -186,14 +186,14 @@ void Grid3::saveRho(std::string filename) {
   std::cout << "Done!\n";
 }
 
-void Grid3::evolve(double dt) {
+void Grid3::evolve(float dt) {
   if (dt == 0) {
     dt = 0.1 * _h * _h * _h;
   }
 
   Function nextRho = Function(_nPoints);
 
-  double deltaRho = 0.;
+  float deltaRho = 0.;
   for (int idx = 0; idx < _nPoints; ++idx) {
     Point p = _volume[idx];
 
@@ -219,9 +219,9 @@ void Grid3::project() {
   Function sphere_rho(_nPoints);
 
   for (int i = 0; i < _nPoints; ++i) {
-    double rho = _rho[i];
+    float rho = _rho[i];
     if (rho == 0) { continue; }
-    std::pair<int[8], double[8]>& cubic = _projection[i];
+    std::pair<int[8], float[8]>& cubic = _projection[i];
     for (int j = 0; j < 8; ++j) {
       sphere_rho[cubic.first[j]] += rho * cubic.second[j];
     }
@@ -234,7 +234,7 @@ void Grid3::project() {
 // private
 
 
-double Grid3::phi(double x, double y, double z) {
+float Grid3::phi(float x, float y, float z) {
   //default function: a sphere centred in (5,5,5) with r=4.5
   return std::sqrt((x-.5)*(x-.5) + (y-.5)*(y-.5) + (z-.5)*(z-.5)) - .25;
 }
@@ -257,7 +257,7 @@ void Grid3::fillFirstRho() {
   std::uniform_int_distribution<int> init(0, _nPoints);
   int start_point = init(gen);
 
-  std::pair<int[8], double[8]>& cubic = _projection[start_point];
+  std::pair<int[8], float[8]>& cubic = _projection[start_point];
   for (int j = 0; j < 8; ++j) {
     _rho[cubic.first[j]] += 1. * cubic.second[j];
   }
@@ -266,14 +266,14 @@ void Grid3::fillFirstRho() {
 void Grid3::createProjection() {
   auto start_time = std::chrono::high_resolution_clock::now();
   std::cout << "Constructing projection...     ";
-  _projection = new std::pair<int[8], double[8]>[_nPoints];
+  _projection = new std::pair<int[8], float[8]>[_nPoints];
   for (int i = 0; i < _nPoints; ++i) {
     Point c = closest(_volume[i]);
 
     //find the left-front-down grid point nearest to c
-    double x0 = (int)(c.x/_h) *_h;
-    double y0 = (int)(c.y/_h) *_h;
-    double z0 = (int)(c.z/_h) *_h;
+    float x0 = (int)(c.x/_h) *_h;
+    float y0 = (int)(c.y/_h) *_h;
+    float z0 = (int)(c.z/_h) *_h;
 
     //find the indexes of the cubic nearest points to c
     for (int k = 0; k < _nPoints; ++k) {
@@ -290,9 +290,9 @@ void Grid3::createProjection() {
     }
 
     //find the weights of the interpolation
-    double xd = (c.x - x0) /_h;
-    double yd = (c.y - y0) /_h;
-    double zd = (c.z - z0) /_h;
+    float xd = (c.x - x0) /_h;
+    float yd = (c.y - y0) /_h;
+    float zd = (c.z - z0) /_h;
 
     _projection[i].second[0] = (1-xd) * (1-yd) * (1-zd);
     _projection[i].second[1] = (1-xd) * (1-yd) *   zd;
@@ -311,11 +311,11 @@ void Grid3::createProjection() {
 }
 
 Point Grid3::closest(Point const& p) {
-  double x = p.x;
-  double y = p.y;
-  double z = p.z;
+  float x = p.x;
+  float y = p.y;
+  float z = p.z;
 
-  double gradient[3];   //nabla_h (phi)
+  float gradient[3];   //nabla_h (phi)
   gradient[0] = (phi(x+_h, y   , z   ) - phi(x-_h, y,    z   )) /(2*_h);
   gradient[1] = (phi(x,    y+_h, z   ) - phi(x,    y-_h, z   )) /(2*_h);
   gradient[2] = (phi(x,    y,    z+_h) - phi(x,    y,    z-_h)) /(2*_h);
@@ -326,10 +326,10 @@ Point Grid3::closest(Point const& p) {
   }
 
   // | nabla_h (phi) |
-  double mod = std::sqrt(gradient[0]*gradient[0] + gradient[1]*gradient[1] +
+  float mod = std::sqrt(gradient[0]*gradient[0] + gradient[1]*gradient[1] +
     gradient[2]*gradient[2]);
 
-  double dist_xyz = phi(x,y,z);
+  float dist_xyz = phi(x,y,z);
 
   Point r;
   r.x = x - gradient[0] * dist_xyz / mod;
@@ -380,7 +380,7 @@ bool Grid3::loadRelations(std::string filename) {
     return false;
   }
 
-  _projection = new std::pair<int[8], double[8]>[_nPoints];
+  _projection = new std::pair<int[8], float[8]>[_nPoints];
   for (int i = 0; i < _nPoints; ++i) {
     for (int j = 0; j < 8; ++j) {
       fin >> _projection[i].first[j];
@@ -425,10 +425,10 @@ bool Grid3::loadRho(std::string filename) {
   return true;
 }
 
-double Grid3::der1(int pointIndex, int direction) {
+float Grid3::der1(int pointIndex, int direction) {
   Neighbours& near = _neighbour[pointIndex];
 
-  double result = 0.;
+  float result = 0.;
 
   switch (direction + 1)
   {
@@ -451,10 +451,10 @@ double Grid3::der1(int pointIndex, int direction) {
 
 }
 
-double Grid3::der2(int pointIndex, int direction) {
+float Grid3::der2(int pointIndex, int direction) {
   Neighbours& near = _neighbour[pointIndex];
 
-  double result = 0.;
+  float result = 0.;
 
   switch (direction + 1)
   {
@@ -477,10 +477,10 @@ double Grid3::der2(int pointIndex, int direction) {
   return result / (_h * _h);
 }
 
-double Grid3::derij(int pointIndex, int dir1, int dir2) {
+float Grid3::derij(int pointIndex, int dir1, int dir2) {
   Neighbours near = _neighbour[pointIndex];
 
-  double result = 0.;
+  float result = 0.;
 
   switch ((dir1 + 1) * (dir2 + 1))
   {
