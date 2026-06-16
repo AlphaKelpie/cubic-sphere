@@ -24,6 +24,7 @@ Grid3::Grid3(Interval x, Interval y, Interval z, float T, float h)
 
 	_neighbour = new Neighbours[_nPoints];
 
+  std::cout << "Construct volume and neighbour...\n";
 	//for every point of the descrete domain..
 	int down;
 	int top;
@@ -33,7 +34,7 @@ Grid3::Grid3(Interval x, Interval y, Interval z, float T, float h)
 	int left;
   int index = 0;
 	for (float i = x.min; i < x.max + 1E-3; i+=_h) {
-		left = (i <= x.min) ? -1 : 1;
+    std::cout << '\r' << index << '/' << _nPoints << std::flush;		left = (i <= x.min) ? -1 : 1;
 		right = (i >= x.max - _h) ? -1 : 1;
 		for (float j = y.min; j < y.max + 1E-3; j+=_h) {
 			front = (j <= y.min) ? -1 : 1;
@@ -90,6 +91,7 @@ Grid3::Grid3(Interval x, Interval y, Interval z, float T, float h)
 
 	_volume = Surface(_nPoints, temp);
 	delete[] temp;
+  std::cout << "\tDone!\n";
 
 	createProjection();
 	createRho();
@@ -120,7 +122,7 @@ void Grid3::saveRelations(std::string filename) {
 	// points around
 	// 1 row per point to _neighbour indexes (19 int)
 
-	std::cout << "Saving nPoints, projection and neighbour...     ";
+	std::cout << "Saving nPoints, projection and neighbour... " << std::flush;
 	std::fstream fout(filename + "_pn.dat", std::ios::out);
 
 	fout << _nPoints << "\n\n";
@@ -151,7 +153,7 @@ void Grid3::saveSurface(std::string filename) {
   // first row: _nPoints _h
   // 1 row per point in _volume
 
-  std::cout << "Saving surface...     ";
+  std::cout << "Saving surface... " << std::flush;
   if (_volume.nPoints() == 0) {
     std::cerr << "Error, cannot save surface of a simulation created from a map.\n";
     return;
@@ -172,7 +174,7 @@ void Grid3::saveRho(std::string filename) {
   // first row: _nPoints
   // 1 row per _rho value
 
-  std::cout << "Saving rho...     ";
+  std::cout << "Saving rho... " << std::flush;
 
   std::fstream fout(filename + "_r.dat", std::ios::out);
 
@@ -220,7 +222,7 @@ void Grid3::project() {
 
   for (int i = 0; i < _nPoints; ++i) {
     float rho = _rho[i];
-    if (rho == 0) { continue; }
+    if (rho == 0.) { continue; }
     std::pair<int[8], float[8]>& cubic = _projection[i];
     for (int j = 0; j < 8; ++j) {
       sphere_rho[cubic.first[j]] += rho * cubic.second[j];
@@ -235,13 +237,13 @@ void Grid3::project() {
 
 
 float Grid3::phi(float x, float y, float z) {
-  //default function: a sphere centred in (5,5,5) with r=4.5
-  return std::sqrt((x-.5)*(x-.5) + (y-.5)*(y-.5) + (z-.5)*(z-.5)) - .25;
+  //default function: a sphere centred in (5,5,5) with r=3.5
+  return std::sqrt((x-5)*(x-5) + (y-5)*(y-5) + (z-5)*(z-5)) - 3.5;
 }
 
 void Grid3::createRho() {
   if (_rho.f() != nullptr) {
-    std::cerr << "Warning: v already created. Deleting it before recreating\n";
+    std::cerr << "Warning: rho already created. Deleting it before recreating\n";
     _rho.del();
   }
 
@@ -265,9 +267,10 @@ void Grid3::fillFirstRho() {
 
 void Grid3::createProjection() {
   auto start_time = std::chrono::high_resolution_clock::now();
-  std::cout << "Constructing projection...     ";
+  std::cout << "Constructing projection...\n";
   _projection = new std::pair<int[8], float[8]>[_nPoints];
   for (int i = 0; i < _nPoints; ++i) {
+    std::cout << '\r' << i << '/' << _nPoints << std::flush;
     Point c = closest(_volume[i]);
 
     //find the left-front-down grid point nearest to c
@@ -307,7 +310,7 @@ void Grid3::createProjection() {
   auto end_time = std::chrono::high_resolution_clock::now();
   auto duration = std::chrono::duration_cast<std::chrono::minutes>(
     end_time - start_time);
-  std::cout << "Done! (" << duration.count() << " minutes)\n";
+  std::cout << "\tDone! (" << duration.count() << " minutes)\n";
 }
 
 Point Grid3::closest(Point const& p) {
@@ -340,10 +343,10 @@ Point Grid3::closest(Point const& p) {
 }
 
 bool Grid3::loadSurface(std::string filename) {
-  std::cout << "Loading surface...     ";
+  std::cout << "Loading surface... " << std::flush;
   std::fstream fin(filename + "_s.dat", std::ios::in);
   if (!fin.is_open()) {
-    std::cerr << "Error. Surface file '"<< filename << "' couldn't be opened.\n";
+    std::cerr << "Error: surface file '"<< filename << "' couldn't be opened.\n";
     return false;
   }
 
@@ -361,22 +364,22 @@ bool Grid3::loadSurface(std::string filename) {
   delete[] temp;
 
   fin.close();
-  std::cout << "Done.\n";
+  std::cout << "Done!\n";
   return true;
 }
 
 bool Grid3::loadRelations(std::string filename) {
-  std::cout << "Loading relations...     ";
+  std::cout << "Loading relations... " << std::flush;
   std::fstream fin(filename + "_pn.dat", std::ios::in);
   if (!fin.is_open()) {
-    std::cerr << "Error. Relations file '"<< filename << "' couldn't be opened.\n";
+    std::cerr << "Error: relations file '"<< filename << "' couldn't be opened.\n";
     return false;
   }
 
   int nPoints;
   fin >> nPoints;
   if (_nPoints != nPoints) {
-    std::cerr << "Error: Relations file has different number of points of surface.\n";
+    std::cerr << "Error: relations file has different number of points of surface.\n";
     return false;
   }
 
@@ -396,22 +399,22 @@ bool Grid3::loadRelations(std::string filename) {
   }
 
   fin.close();
-  std::cout << "Done.\n";
+  std::cout << "Done!\n";
   return true;
 }
 
 bool Grid3::loadRho(std::string filename) {
-  std::cout << "Loading rho...     ";
+  std::cout << "Loading rho... " << std::flush;
   std::fstream fin(filename + "_r.dat", std::ios::in);
   if (!fin.is_open()) {
-    std::cerr << "Error. Rho file '"<< filename << "' couldn't be opened.\n";
+    std::cerr << "Error: rho file '"<< filename << "' couldn't be opened.\n";
     return false;
   }
 
   int nPoints;
   fin >> nPoints;
   if (_nPoints != nPoints) {
-    std::cerr << "Error: Rho file has different number of points of surface.\n";
+    std::cerr << "Error: rho file has different number of points of surface.\n";
     return false;
   }
 
@@ -421,7 +424,7 @@ bool Grid3::loadRho(std::string filename) {
   }
 
   fin.close();
-  std::cout << "Done.\n";
+  std::cout << "Done!\n";
   return true;
 }
 
