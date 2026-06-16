@@ -61,7 +61,7 @@ Function::~Function() {
 
 float Function::operator[](int idx) const {
   if (idx >= _nPoints) {
-    throw std::out_of_range("Error: invalid index in Function");
+    throw std::out_of_range("Error: index in 'float Function::[]' bigger than _nPoints");
   }
   if (idx < 0) { return 0.0; }
   return _f[idx];
@@ -69,11 +69,10 @@ float Function::operator[](int idx) const {
 
 float& Function::operator[](int idx) {
   if (idx >= _nPoints) {
-    throw std::out_of_range("Error: invalid index in Function");
+    throw std::out_of_range("Error: index in 'float& Function::[]' bigger than _nPoints");
   }
   if (idx < 0) {
-    static float zero = 0.;
-    return zero;
+    throw std::out_of_range("Error: index in 'float& Function::[]' lower than 0");
   }
   return _f[idx];
 }
