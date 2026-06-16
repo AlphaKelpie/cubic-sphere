@@ -123,7 +123,7 @@ void Grid3::saveRelations(std::string filename) {
 	// 1 row per point to _neighbour indexes (19 int)
 
 	std::cout << "Saving nPoints, projection and neighbour... " << std::flush;
-	std::fstream fout(filename + "_pn.dat", std::ios::out);
+	std::fstream fout(filename + "pn.dat", std::ios::out);
 
 	fout << _nPoints << "\n\n";
 
@@ -159,7 +159,7 @@ void Grid3::saveSurface(std::string filename) {
     return;
   }
 
-  std::fstream fout(filename + "_s.dat", std::ios::out);
+  std::fstream fout(filename + "s.dat", std::ios::out);
 
   fout << _nPoints << ' ' << _h << "\n\n";
 
@@ -176,7 +176,7 @@ void Grid3::saveRho(std::string filename) {
 
   std::cout << "Saving rho... " << std::flush;
 
-  std::fstream fout(filename + "_r.dat", std::ios::out);
+  std::fstream fout(filename + "r.dat", std::ios::out);
 
   fout << _nPoints << "\n\n";
 
@@ -344,7 +344,7 @@ Point Grid3::closest(Point const& p) {
 
 bool Grid3::loadSurface(std::string filename) {
   std::cout << "Loading surface... " << std::flush;
-  std::fstream fin(filename + "_s.dat", std::ios::in);
+  std::fstream fin(filename + "s.dat", std::ios::in);
   if (!fin.is_open()) {
     std::cerr << "Error: surface file '"<< filename << "' couldn't be opened.\n";
     return false;
@@ -370,7 +370,7 @@ bool Grid3::loadSurface(std::string filename) {
 
 bool Grid3::loadRelations(std::string filename) {
   std::cout << "Loading relations... " << std::flush;
-  std::fstream fin(filename + "_pn.dat", std::ios::in);
+  std::fstream fin(filename + "pn.dat", std::ios::in);
   if (!fin.is_open()) {
     std::cerr << "Error: relations file '"<< filename << "' couldn't be opened.\n";
     return false;
@@ -405,7 +405,7 @@ bool Grid3::loadRelations(std::string filename) {
 
 bool Grid3::loadRho(std::string filename) {
   std::cout << "Loading rho... " << std::flush;
-  std::fstream fin(filename + "_r.dat", std::ios::in);
+  std::fstream fin(filename + "r.dat", std::ios::in);
   if (!fin.is_open()) {
     std::cerr << "Error: rho file '"<< filename << "' couldn't be opened.\n";
     return false;

@@ -13,7 +13,7 @@ int main() {
 
       std::cout << "Saving\n";
       g.saveRelations(path);
-      g.saveRho(path + "init");
+      g.saveRho(path + "init_");
       g.saveSurface(path);
     }
 
@@ -26,8 +26,10 @@ int main() {
         std::cout << "Step " << step << ": " << std::flush;
         for (int sim = 0; sim < 100; ++sim) {
           g.evolve();
+          // break;
         }
         g.saveRho(path + "evolving_" + std::to_string(step));
+        // break;
       }
 
       g.project();
