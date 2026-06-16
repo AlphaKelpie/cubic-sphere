@@ -34,12 +34,13 @@ Grid3::Grid3(Interval x, Interval y, Interval z, float T, float h)
 	int left;
   int index = 0;
 	for (float i = x.min; i < x.max + 1E-3; i+=_h) {
-    std::cout << '\r' << index << '/' << _nPoints << std::flush;		left = (i <= x.min) ? -1 : 1;
+    left = (i <= x.min) ? -1 : 1;
 		right = (i >= x.max - _h) ? -1 : 1;
 		for (float j = y.min; j < y.max + 1E-3; j+=_h) {
-			front = (j <= y.min) ? -1 : 1;
+      front = (j <= y.min) ? -1 : 1;
 			behind = (j >= y.max - _h) ? -1 : 1;
 			for (float k = z.min; k < z.max + 1E-3; k+=_h) {
+        std::cout << '\r' << index << '/' << _nPoints << std::flush;
 				down = (k <= z.min) ? -1 : 1;
 				top = (k >= z.max - _h) ? -1 : 1;
 				//..add it to the volume and..
