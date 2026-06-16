@@ -71,13 +71,13 @@ class Grid3 {
   bool loadRho(std::string filename = "simulation");
 
   //first derivative along one direction
-  float der1(int pointIndex, int direction);
+  float der1(int pointIndex, int direction) const;
 
   //second derivative along the same direction
-  float der2(int pointIndex, int direction);
+  float der2(int pointIndex, int direction) const;
 
   //second mix derivative along two different directions
-  float derij(int pointIndex, int dir1, int dir2);
+  float derij(int pointIndex, int dir1, int dir2) const;
 
   //logic end of int between -1 and +1
   int sgn(int val1, int val2);

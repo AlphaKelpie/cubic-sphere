@@ -428,7 +428,7 @@ bool Grid3::loadRho(std::string filename) {
   return true;
 }
 
-float Grid3::der1(int pointIndex, int direction) {
+float Grid3::der1(int pointIndex, int direction) const {
   Neighbours& near = _neighbour[pointIndex];
 
   float result = 0.;
@@ -454,7 +454,7 @@ float Grid3::der1(int pointIndex, int direction) {
 
 }
 
-float Grid3::der2(int pointIndex, int direction) {
+float Grid3::der2(int pointIndex, int direction) const {
   Neighbours& near = _neighbour[pointIndex];
 
   float result = 0.;
@@ -480,7 +480,7 @@ float Grid3::der2(int pointIndex, int direction) {
   return result / (_h * _h);
 }
 
-float Grid3::derij(int pointIndex, int dir1, int dir2) {
+float Grid3::derij(int pointIndex, int dir1, int dir2) const {
   Neighbours near = _neighbour[pointIndex];
 
   float result = 0.;
