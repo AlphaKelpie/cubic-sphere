@@ -18,6 +18,8 @@ class Params {
   Interval z;
   float radius;
   Quaternion center;
+  int step{2002};
+  int sim{100};
 
   // Global istance access
   static Params& get() {
@@ -71,6 +73,8 @@ class Params {
       else if (key == "cx") cx = std::stof(value);
       else if (key == "cy") cy = std::stof(value);
       else if (key == "cz") cz = std::stof(value);
+      else if (key == "step") step = std::stoi(value) + 2;
+      else if (key == "sim") sim = std::stoi(value);
     }
     w = {w_min, w_max};
     x = {x_min, x_max};

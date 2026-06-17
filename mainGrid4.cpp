@@ -38,9 +38,10 @@ int main(int argc, char* argv[]) {
       Grid4 g(path, path, Params::get().T);
 
       std::cout << "Evolving\n";
-      for (int step = 100; step < 2002; step+=100) {
+      for (int step = Params::get().sim; step < Params::get().step;
+          step+=Params::get().sim) {
         std::cout << "Step " << step << ": " << std::flush;
-        for (int sim = 0; sim < 100; ++sim) {
+        for (int sim = 0; sim < Params::get().sim; ++sim) {
           g.evolve();
           // break;
         }
