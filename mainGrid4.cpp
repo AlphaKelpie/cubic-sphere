@@ -1,6 +1,7 @@
 #include "params.hpp"
 #include "grid4.h"
 
+#include <format>
 #include <iostream>
 #include <string>
 
@@ -40,10 +41,10 @@ int main(int argc, char* argv[]) {
         std::cout << "Step " << step << ": " << std::flush;
         for (int sim = 0; sim < 100; ++sim) {
           g.evolve();
-          break;
+          // break;
         }
-        g.saveRho(path + "evolving_" + std::to_string(step));
-        break;
+        g.saveRho(path + "evolving_" + std::format("{:04}", step) + '_');
+        // break;
       }
 
       g.project();

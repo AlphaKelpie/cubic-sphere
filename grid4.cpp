@@ -145,7 +145,10 @@ Grid4::Grid4(std::string surfFile, std::string relFile, float T)
 	if (!loadRelations(relFile)) {
 		throw std::runtime_error{"loadRelation() cannot open file."};
 	}
-	createRho();
+  if (!loadRho(relFile+"init_")) {
+    std::cerr << "Warning: unable to load initial rho. Recreating";
+  	createRho();
+  }
 }
 
 Grid4::~Grid4() {
@@ -301,7 +304,8 @@ void Grid4::fillFirstRho() {
 
   std::pair<int[16], float[16]>& cubic = _projection[start_point];
   for (int j = 0; j < 16; ++j) {
-    _rho[cubic.first[j]] += 1. * cubic.second[j];
+    if (cubic.first[j] >= 0)
+    _rho[cubic.first[j]] = 1. * cubic.second[j];
   }
 }
 

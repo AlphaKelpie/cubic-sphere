@@ -67,7 +67,7 @@ struct Quaternion
   float z = 0;
 
   friend bool operator==(const Quaternion& lhs, const Quaternion& rhs) {
-    if(std::abs(lhs.w-rhs.w) <= 1E-14 && std::abs(lhs.x-rhs.x) <= 1E-14 &&
+    if (std::abs(lhs.w-rhs.w) <= 1E-14 && std::abs(lhs.x-rhs.x) <= 1E-14 &&
       std::abs(lhs.y-rhs.y) <= 1E-14 && std::abs(lhs.z-rhs.z) <= 1E-14)
       return true;
 
