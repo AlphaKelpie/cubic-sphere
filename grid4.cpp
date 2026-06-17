@@ -315,7 +315,7 @@ void Grid4::project() {
 
   for (int i = 0; i < _nPoints; ++i) {
     float rho = _rho[i];
-    if (abs(rho) <= 1E-14) { continue; }
+    if (std::abs(rho) <= 0.f) { continue; }
     std::pair<int[16], float[16]>& cubic = _projection[i];
     for (int j = 0; j < 16; ++j) {
       sphere_rho[cubic.first[j]] += rho * cubic.second[j];
