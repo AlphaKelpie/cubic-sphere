@@ -1,4 +1,5 @@
 #include "grid4.h"
+#include "params.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -53,38 +54,70 @@ Grid4::Grid4(Interval w, Interval x, Interval y, Interval z, float T, float h)
           temp[index] = {m, i, j, k};
           //..create corresponding neighbour
           _neighbour[index].point[0] = index;   // itself
-          _neighbour[index].point[1] = std::max(abs(index - xPoints * yPoints * zPoints) * neg, -1);
-          _neighbour[index].point[2] = std::max(abs(index + xPoints * yPoints * zPoints) * pos, -1);
-          _neighbour[index].point[3] = std::max(abs(index - yPoints * zPoints) * left, -1);
-          _neighbour[index].point[4] = std::max(abs(index + yPoints * zPoints) * right, -1);
-          _neighbour[index].point[5] = std::max(abs(index - zPoints) * front, -1);
-          _neighbour[index].point[6] = std::max(abs(index + zPoints) * behind, -1);
-          _neighbour[index].point[7] = std::max(abs(index - 1) * down, -1);
-          _neighbour[index].point[8] = std::max(abs(index + 1) * top, -1);
-          _neighbour[index].point[9] = std::max(abs( index - (xPoints + 1) * yPoints * zPoints) * sgn(neg, left), -1);
-          _neighbour[index].point[10] = std::max(abs(index - (xPoints - 1) * yPoints * zPoints) * sgn(neg, right), -1);
-          _neighbour[index].point[11] = std::max(abs(index - (xPoints * yPoints + 1) * zPoints) * sgn(neg, front), -1);
-          _neighbour[index].point[12] = std::max(abs(index - (xPoints * yPoints - 1) * zPoints) * sgn(neg, behind), -1);
-          _neighbour[index].point[13] = std::max(abs(index - (xPoints * yPoints * zPoints + 1)) * sgn(neg, down), -1);
-          _neighbour[index].point[14] = std::max(abs(index - (xPoints * yPoints * zPoints - 1)) * sgn(neg, top), -1);
-          _neighbour[index].point[15] = std::max(abs(index + (xPoints - 1) * yPoints * zPoints) * sgn(pos, left), -1);
-          _neighbour[index].point[16] = std::max(abs(index + (xPoints + 1) * yPoints * zPoints) * sgn(pos, right), -1);
-          _neighbour[index].point[17] = std::max(abs(index + (xPoints * yPoints - 1) * zPoints) * sgn(pos, front), -1);
-          _neighbour[index].point[18] = std::max(abs(index + (xPoints * yPoints + 1) * zPoints) * sgn(pos, behind), -1);
-          _neighbour[index].point[19] = std::max(abs(index + (xPoints * yPoints * zPoints - 1)) * sgn(pos, down), -1);
-          _neighbour[index].point[20] = std::max(abs(index + (xPoints * yPoints * zPoints + 1)) * sgn(pos, top), -1);
-          _neighbour[index].point[21] = std::max(abs(index - (yPoints + 1) * zPoints) * sgn(left, front), -1);
-          _neighbour[index].point[22] = std::max(abs(index - (yPoints - 1) * zPoints) * sgn(left, behind), -1);
-          _neighbour[index].point[23] = std::max(abs(index - (yPoints * zPoints + 1)) * sgn(left, down), -1);
-          _neighbour[index].point[24] = std::max(abs(index - (yPoints * zPoints - 1)) * sgn(left, top), -1);
-          _neighbour[index].point[25] = std::max(abs(index + (yPoints - 1) * zPoints) * sgn(right, front), -1);
-          _neighbour[index].point[26] = std::max(abs(index + (yPoints + 1) * zPoints) * sgn(right, behind), -1);
-          _neighbour[index].point[27] = std::max(abs(index + (yPoints * zPoints - 1)) * sgn(right, down), -1);
-          _neighbour[index].point[28] = std::max(abs(index + (yPoints * zPoints + 1)) * sgn(right, top), -1);
-          _neighbour[index].point[29] = std::max(abs(index - (zPoints + 1)) * sgn(front, down), -1);
-          _neighbour[index].point[30] = std::max(abs(index - (zPoints - 1)) * sgn(front, top), -1);
-          _neighbour[index].point[31] = std::max(abs(index + (zPoints - 1)) * sgn(behind, down), -1);
-          _neighbour[index].point[32] = std::max(abs(index + (zPoints + 1)) * sgn(behind, top), -1);
+          _neighbour[index].point[1] = std::max(
+            abs(index - xPoints * yPoints * zPoints) * neg, -1);
+          _neighbour[index].point[2] = std::max(
+            abs(index + xPoints * yPoints * zPoints) * pos, -1);
+          _neighbour[index].point[3] = std::max(
+            abs(index - yPoints * zPoints) * left, -1);
+          _neighbour[index].point[4] = std::max(
+            abs(index + yPoints * zPoints) * right, -1);
+          _neighbour[index].point[5] = std::max(
+            abs(index - zPoints) * front, -1);
+          _neighbour[index].point[6] = std::max(
+            abs(index + zPoints) * behind, -1);
+          _neighbour[index].point[7] = std::max(
+            abs(index - 1) * down, -1);
+          _neighbour[index].point[8] = std::max(
+            abs(index + 1) * top, -1);
+          _neighbour[index].point[9] = std::max(
+            abs( index - (xPoints + 1) * yPoints * zPoints) * sgn(neg, left), -1);
+          _neighbour[index].point[10] = std::max(
+            abs(index - (xPoints - 1) * yPoints * zPoints) * sgn(neg, right), -1);
+          _neighbour[index].point[11] = std::max(
+            abs(index - (xPoints * yPoints + 1) * zPoints) * sgn(neg, front), -1);
+          _neighbour[index].point[12] = std::max(
+            abs(index - (xPoints * yPoints - 1) * zPoints) * sgn(neg, behind), -1);
+          _neighbour[index].point[13] = std::max(
+            abs(index - (xPoints * yPoints * zPoints + 1)) * sgn(neg, down), -1);
+          _neighbour[index].point[14] = std::max(
+            abs(index - (xPoints * yPoints * zPoints - 1)) * sgn(neg, top), -1);
+          _neighbour[index].point[15] = std::max(
+            abs(index + (xPoints - 1) * yPoints * zPoints) * sgn(pos, left), -1);
+          _neighbour[index].point[16] = std::max(
+            abs(index + (xPoints + 1) * yPoints * zPoints) * sgn(pos, right), -1);
+          _neighbour[index].point[17] = std::max(
+            abs(index + (xPoints * yPoints - 1) * zPoints) * sgn(pos, front), -1);
+          _neighbour[index].point[18] = std::max(
+            abs(index + (xPoints * yPoints + 1) * zPoints) * sgn(pos, behind), -1);
+          _neighbour[index].point[19] = std::max(
+            abs(index + (xPoints * yPoints * zPoints - 1)) * sgn(pos, down), -1);
+          _neighbour[index].point[20] = std::max(
+            abs(index + (xPoints * yPoints * zPoints + 1)) * sgn(pos, top), -1);
+          _neighbour[index].point[21] = std::max(
+            abs(index - (yPoints + 1) * zPoints) * sgn(left, front), -1);
+          _neighbour[index].point[22] = std::max(
+            abs(index - (yPoints - 1) * zPoints) * sgn(left, behind), -1);
+          _neighbour[index].point[23] = std::max(
+            abs(index - (yPoints * zPoints + 1)) * sgn(left, down), -1);
+          _neighbour[index].point[24] = std::max(
+            abs(index - (yPoints * zPoints - 1)) * sgn(left, top), -1);
+          _neighbour[index].point[25] = std::max(
+            abs(index + (yPoints - 1) * zPoints) * sgn(right, front), -1);
+          _neighbour[index].point[26] = std::max(
+            abs(index + (yPoints + 1) * zPoints) * sgn(right, behind), -1);
+          _neighbour[index].point[27] = std::max(
+            abs(index + (yPoints * zPoints - 1)) * sgn(right, down), -1);
+          _neighbour[index].point[28] = std::max(
+            abs(index + (yPoints * zPoints + 1)) * sgn(right, top), -1);
+          _neighbour[index].point[29] = std::max(
+            abs(index - (zPoints + 1)) * sgn(front, down), -1);
+          _neighbour[index].point[30] = std::max(
+            abs(index - (zPoints - 1)) * sgn(front, top), -1);
+          _neighbour[index].point[31] = std::max(
+            abs(index + (zPoints - 1)) * sgn(behind, down), -1);
+          _neighbour[index].point[32] = std::max(
+            abs(index + (zPoints + 1)) * sgn(behind, top), -1);
           ++index;
         }
       }
@@ -160,7 +193,7 @@ void Grid4::saveSurface(std::string filename) {
 
   std::cout << "Saving surface... " << std::flush;
   if (_volume.nPoints() == 0) {
-    std::cerr << "Error, cannot save surface of a simulation created from a map.\n";
+    std::cerr << "Error: cannot save surface (probably empty)\n";
     return;
   }
 
@@ -240,9 +273,12 @@ void Grid4::project() {
 
 // private
 
+
 float Grid4::phi(float w, float x, float y, float z) {
-  //default function: a sphere centred in (5,5,5) with r=3.5
-  return std::sqrt((w-.5)*(w-.5) + (x-.5)*(x-.5) + (y-.5)*(y-.5) + (z-.5)*(z-.5)) - .3;
+  Quaternion& c = Params::get().center;
+  return std::sqrt(
+      (w-c.w)*(w-c.w) + (x-c.x)*(x-c.x) + (y-c.y)*(y-c.y) + (z-c.z)*(z-c.z)
+    ) - Params::get().radius;
 }
 
 void Grid4::createRho() {
@@ -287,22 +323,38 @@ void Grid4::createProjection() {
     for (int k = 0; k < _nPoints; ++k) {
       Quaternion s = _volume[k];
 
-      if      (s == Quaternion{w0,    x0,    y0,    z0   })   _projection[i].first[0] = k;
-      else if (s == Quaternion{w0,    x0,    y0,    z0+_h})   _projection[i].first[1] = k;
-      else if (s == Quaternion{w0,    x0,    y0+_h, z0   })   _projection[i].first[2] = k;
-      else if (s == Quaternion{w0,    x0,    y0+_h, z0+_h})   _projection[i].first[3] = k;
-      else if (s == Quaternion{w0,    x0+_h, y0,    z0   })   _projection[i].first[4] = k;
-      else if (s == Quaternion{w0,    x0+_h, y0,    z0+_h})   _projection[i].first[5] = k;
-      else if (s == Quaternion{w0,    x0+_h, y0+_h, z0   })   _projection[i].first[6] = k;
-      else if (s == Quaternion{w0,    x0+_h, y0+_h, z0+_h})   _projection[i].first[7] = k;
-      else if (s == Quaternion{w0+_h, x0,    y0,    z0   })   _projection[i].first[8] = k;
-      else if (s == Quaternion{w0+_h, x0,    y0,    z0+_h})   _projection[i].first[9] = k;
-      else if (s == Quaternion{w0+_h, x0,    y0+_h, z0   })   _projection[i].first[10] = k;
-      else if (s == Quaternion{w0+_h, x0,    y0+_h, z0+_h})   _projection[i].first[11] = k;
-      else if (s == Quaternion{w0+_h, x0+_h, y0,    z0   })   _projection[i].first[12] = k;
-      else if (s == Quaternion{w0+_h, x0+_h, y0,    z0+_h})   _projection[i].first[13] = k;
-      else if (s == Quaternion{w0+_h, x0+_h, y0+_h, z0   })   _projection[i].first[14] = k;
-      else if (s == Quaternion{w0+_h, x0+_h, y0+_h, z0+_h})   _projection[i].first[15] = k;
+      if      (s == Quaternion{w0,    x0,    y0,    z0   })
+        _projection[i].first[0] = k;
+      else if (s == Quaternion{w0,    x0,    y0,    z0+_h})
+        _projection[i].first[1] = k;
+      else if (s == Quaternion{w0,    x0,    y0+_h, z0   })
+        _projection[i].first[2] = k;
+      else if (s == Quaternion{w0,    x0,    y0+_h, z0+_h})
+        _projection[i].first[3] = k;
+      else if (s == Quaternion{w0,    x0+_h, y0,    z0   })
+        _projection[i].first[4] = k;
+      else if (s == Quaternion{w0,    x0+_h, y0,    z0+_h})
+        _projection[i].first[5] = k;
+      else if (s == Quaternion{w0,    x0+_h, y0+_h, z0   })
+        _projection[i].first[6] = k;
+      else if (s == Quaternion{w0,    x0+_h, y0+_h, z0+_h})
+        _projection[i].first[7] = k;
+      else if (s == Quaternion{w0+_h, x0,    y0,    z0   })
+        _projection[i].first[8] = k;
+      else if (s == Quaternion{w0+_h, x0,    y0,    z0+_h})
+        _projection[i].first[9] = k;
+      else if (s == Quaternion{w0+_h, x0,    y0+_h, z0   })
+        _projection[i].first[10] = k;
+      else if (s == Quaternion{w0+_h, x0,    y0+_h, z0+_h})
+        _projection[i].first[11] = k;
+      else if (s == Quaternion{w0+_h, x0+_h, y0,    z0   })
+        _projection[i].first[12] = k;
+      else if (s == Quaternion{w0+_h, x0+_h, y0,    z0+_h})
+        _projection[i].first[13] = k;
+      else if (s == Quaternion{w0+_h, x0+_h, y0+_h, z0   })
+        _projection[i].first[14] = k;
+      else if (s == Quaternion{w0+_h, x0+_h, y0+_h, z0+_h})
+        _projection[i].first[15] = k;
     }
 
     //find the weights of the interpolation
@@ -342,7 +394,7 @@ Quaternion Grid4::closest(Quaternion const& p) {
   float z = p.z;
 
   float gradient[4];   //nabla_h (phi)
-  gradient[0] = (phi(w+_h, x,    y,    z   ) - phi(w-_h, x,    y,    z   ) /(2*_h));
+  gradient[0] = (phi(w+_h, x,    y,    z   ) - phi(w-_h, x,    y,    z   )) /(2*_h);
   gradient[1] = (phi(w,    x+_h, y   , z   ) - phi(w,    x-_h, y,    z   )) /(2*_h);
   gradient[2] = (phi(w,    x,    y+_h, z   ) - phi(w,    x,    y-_h, z   )) /(2*_h);
   gradient[3] = (phi(w,    x,    y,    z+_h) - phi(w,    x,    y,    z-_h)) /(2*_h);
@@ -371,7 +423,8 @@ bool Grid4::loadSurface(std::string filename) {
   std::cout << "Loading surface... " << std::flush;
   std::fstream fin(filename + "s.dat", std::ios::in);
   if (!fin.is_open()) {
-    std::cerr << "Error: surface file '"<< filename << "' couldn't be opened.\n";
+    std::cerr << "Error: surface file '"<< filename
+              << "' couldn't be opened.\n";
     return false;
   }
 
@@ -398,14 +451,15 @@ bool Grid4::loadRelations(std::string filename) {
   std::cout << "Loading relations... " << std::flush;
   std::fstream fin(filename + "pn.dat", std::ios::in);
   if (!fin.is_open()) {
-    std::cerr << "Error: relations file '"<< filename << "' couldn't be opened.\n";
+    std::cerr << "Error: relations file '"<< filename
+              << "' couldn't be opened.\n";
     return false;
   }
 
   int nPoints;
   fin >> nPoints;
   if (_nPoints != nPoints) {
-    std::cerr << "Error: relations file has different number of points of surface.\n";
+    std::cerr << "Error: relations file has uncorrect number of points\n";
     return false;
   }
 
@@ -440,7 +494,7 @@ bool Grid4::loadRho(std::string filename) {
   int nPoints;
   fin >> nPoints;
   if (_nPoints != nPoints) {
-    std::cerr << "Error: rho file has different number of points of surface.\n";
+    std::cerr << "Error: rho file has uncorrect number of points\n";
     return false;
   }
 
@@ -508,7 +562,7 @@ float Grid4::der2(int pointIndex, int direction) const {
     break;
   }
 
-  result -= _rho[near.point[0]] * 2;
+  result -= (_rho[near.point[0]] * 2);
   return result / (_h * _h);
 }
 

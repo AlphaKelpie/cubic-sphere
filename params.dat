@@ -1,0 +1,16 @@
+path data/test4_2_
+T 40.
+h 0.16
+w_min 0.
+w_max 4.
+x_min 0.
+x_max 4.
+y_min 0.
+y_max 4.
+z_min 0.
+z_max 4.
+radius 1.
+cw 2.
+cx 2.
+cy 2.
+cz 2.

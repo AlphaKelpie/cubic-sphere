@@ -1,15 +1,29 @@
+#include "params.hpp"
 #include "grid4.h"
 
 #include <iostream>
 #include <string>
 
-int main() {
+int main(int argc, char* argv[]) {
+  if (argc == 2) {
+    Params::load(argv[1]);
+  } else {
+    Params::load("params.dat");
+  }
+
   try
   {
-    std::string const path = "./data/test4_";
+    std::string const path = Params::get().path;
     {
       std::cout << "Creating\n";
-      Grid4 g({0.,1.}, {0.,1.}, {0.,1.}, {0.,1.}, 40., .1);
+      Grid4 g(
+        Params::get().w,
+        Params::get().x,
+        Params::get().y,
+        Params::get().z,
+        Params::get().T,
+        Params::get().h
+      );
 
       std::cout << "Saving\n";
       g.saveRelations(path);
@@ -19,7 +33,7 @@ int main() {
 
     {
       std::cout << "Loading\n";
-      Grid4 g(path, path, 40.);
+      Grid4 g(path, path, Params::get().T);
 
       std::cout << "Evolving\n";
       for (int step = 100; step < 2002; step+=100) {
@@ -33,7 +47,7 @@ int main() {
       }
 
       g.project();
-      g.saveRho(path + "evolved");
+      g.saveRho(path + "evolved_");
     }
 
     std::cout << "End\n";
