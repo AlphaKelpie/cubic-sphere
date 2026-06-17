@@ -52,7 +52,8 @@ class Grid4 {
   Grid4(std::string surfFile, std::string realFile, float T);
   ~Grid4();
 
-  void saveRelations(std::string filename = "simulation");
+  void saveProjection(std::string filename = "simulation");
+  void saveNeighbour(std::string filename = "simulation");
   void saveSurface(std::string filename = "simulation");
   void saveRho(std::string filename = "simulation");
 
@@ -78,7 +79,8 @@ class Grid4 {
   //load the map between each surface point 'p' and the interpolation(closest(neighbour(p))).
   //Returns false if file is not found.
   bool loadSurface(std::string filename = "simulation");
-  bool loadRelations(std::string filename = "simulation");
+  bool loadProjection(std::string filename = "simulation");
+  bool loadNeighbour(std::string filename = "simulation");
   bool loadRho(std::string filename = "simulation");
 
   //first derivative along one direction

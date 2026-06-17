@@ -180,8 +180,11 @@ Grid4::Grid4(std::string surfFile, std::string relFile, float T)
   if (!loadSurface(surfFile)) {
 		throw std::runtime_error{"loadSurface() cannot open file."};
   }
-	if (!loadRelations(relFile)) {
-		throw std::runtime_error{"loadRelation() cannot open file."};
+	if (!loadProjection(relFile)) {
+		throw std::runtime_error{"loadProjection() cannot open file."};
+	}
+  if (!loadNeighbour(relFile)) {
+		throw std::runtime_error{"loadNeighbour() cannot open file."};
 	}
   if (!loadRho(relFile+"init_")) {
     std::cerr << "Warning: unable to load initial rho. Recreating";
@@ -194,15 +197,14 @@ Grid4::~Grid4() {
 	delete[] _neighbour;
 }
 
-void Grid4::saveRelations(std::string filename) {
+void Grid4::saveProjection(std::string filename) {
 	// format:
   // first row: _nPoints
-	// 1 row per point to _projection: index and weight for the 8 grid
+	// 1 row per point to _projection: index and weight for the 16 grid
 	// points around
-	// 1 row per point to _neighbour indexes (19 int)
 
-	std::cout << "Saving nPoints, projection and neighbour... " << std::flush;
-	std::fstream fout(filename + "pn.dat", std::ios::out);
+	std::cout << "Saving projection... " << std::flush;
+	std::fstream fout(filename + "p.dat", std::ios::out);
 
 	fout << _nPoints << "\n\n";
 
@@ -214,7 +216,19 @@ void Grid4::saveRelations(std::string filename) {
 		fout << "\n";
 	}
 
-	fout << "\n";
+	fout.close();
+	std::cout << "Done!\n";
+}
+
+void Grid4::saveNeighbour(std::string filename) {
+  // format:
+  // first row: _nPoints
+	// 1 row per point to _neighbour indexes (33 int)
+
+	std::cout << "Saving neighbour... " << std::flush;
+	std::fstream fout(filename + "n.dat", std::ios::out);
+
+	fout << _nPoints << "\n\n";
 
 	for (int i = 0; i < _nPoints; ++i) {
 		for (int j = 0; j < 33; ++j) {
@@ -498,11 +512,11 @@ bool Grid4::loadSurface(std::string filename) {
   return true;
 }
 
-bool Grid4::loadRelations(std::string filename) {
-  std::cout << "Loading relations... " << std::flush;
-  std::fstream fin(filename + "pn.dat", std::ios::in);
+bool Grid4::loadProjection(std::string filename) {
+  std::cout << "Loading projection... " << std::flush;
+  std::fstream fin(filename + "p.dat", std::ios::in);
   if (!fin.is_open()) {
-    std::cerr << "Error: relations file '"<< filename
+    std::cerr << "Error: projection file '"<< filename
               << "' couldn't be opened.\n";
     return false;
   }
@@ -510,7 +524,7 @@ bool Grid4::loadRelations(std::string filename) {
   int nPoints;
   fin >> nPoints;
   if (_nPoints != nPoints) {
-    std::cerr << "Error: relations file has uncorrect number of points\n";
+    std::cerr << "Error: projection file has uncorrect number of points\n";
     return false;
   }
 
@@ -520,6 +534,27 @@ bool Grid4::loadRelations(std::string filename) {
       fin >> _projection[i].first[j];
       fin >> _projection[i].second[j];
     }
+  }
+
+  fin.close();
+  std::cout << "Done!\n";
+  return true;
+}
+
+bool Grid4::loadNeighbour(std::string filename) {
+  std::cout << "Loading neighbour... " << std::flush;
+  std::fstream fin(filename + "n.dat", std::ios::in);
+  if (!fin.is_open()) {
+    std::cerr << "Error: neighbour file '"<< filename
+              << "' couldn't be opened.\n";
+    return false;
+  }
+
+  int nPoints;
+  fin >> nPoints;
+  if (_nPoints != nPoints) {
+    std::cerr << "Error: neighbour file has uncorrect number of points\n";
+    return false;
   }
 
   _neighbour = new Neighbours[_nPoints];

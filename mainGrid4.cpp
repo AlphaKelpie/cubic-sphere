@@ -27,7 +27,8 @@ int main(int argc, char* argv[]) {
       );
 
       std::cout << "Saving\n";
-      g.saveRelations(path);
+      g.saveProjection(path);
+      g.saveNeighbour(path);
       g.saveRho(path + "init_");
       g.saveSurface(path);
     }
