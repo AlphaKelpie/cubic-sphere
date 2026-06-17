@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <random>
@@ -13,13 +14,16 @@ Grid4::Grid4(Interval w, Interval x, Interval y, Interval z, float T, float h)
 		_neighbour{nullptr},
     _t{T/4},
 		_h{h},
-		_delta{(float)1.1 * (float)sqrt(3) * h}
+		_wPoints{(int)std::round((w.max - w.min) / h) + 1},
+		_xPoints{(int)std::round((x.max - x.min) / h) + 1},
+		_yPoints{(int)std::round((y.max - y.min) / h) + 1},
+		_zPoints{(int)std::round((z.max - z.min) / h) + 1},
+		_wMin{w.min},
+		_xMin{x.min},
+		_yMin{y.min},
+		_zMin{z.min}
 {
-  int wPoints = (w.max - w.min) / _h + 1;
-	int xPoints = (x.max - x.min) / _h + 1;
-	int yPoints = (y.max - y.min) / _h + 1;
-	int zPoints = (z.max - z.min) / _h + 1;
-	_nPoints = wPoints * xPoints * yPoints * zPoints;
+	_nPoints = _wPoints * _xPoints * _yPoints * _zPoints;
 
 	// Create surface and _neighbour
 	Quaternion* temp = new Quaternion[_nPoints];
@@ -137,7 +141,9 @@ Grid4::Grid4(Interval w, Interval x, Interval y, Interval z, float T, float h)
 
 Grid4::Grid4(std::string surfFile, std::string relFile, float T)
 	: _nPoints{0},
-    _t{T/4}
+    _t{T/4},
+    _wPoints{0}, _xPoints{0}, _yPoints{0}, _zPoints{0},
+    _wMin{0.f}, _xMin{0.f}, _yMin{0.f}, _zMin{0.f}
 {
   if (!loadSurface(surfFile)) {
 		throw std::runtime_error{"loadSurface() cannot open file."};
@@ -313,76 +319,85 @@ void Grid4::createProjection() {
   auto start_time = std::chrono::high_resolution_clock::now();
   std::cout << "Constructing projection...\n";
   _projection = new std::pair<int[16], float[16]>[_nPoints];
+
+  // Precompute strides for the 4D grid (w is slowest index, z is fastest)
+  const int strideW = _xPoints * _yPoints * _zPoints;
+  const int strideX = _yPoints * _zPoints;
+  const int strideY = _zPoints;
+  const int strideZ = 1;
+
+  // Helper: given a grid index along one axis and a +1 offset, returns the
+  // clamped neighbour index and flags whether it exists (i.e. is inside the grid).
+  // If the point projected onto the surface lands exactly on the max boundary,
+  // the cube vertex at coord+_h would be out of domain: we clamp to the boundary
+  // itself and assign weight 0 (handled via wd/xd/yd/zd being 0 in that case).
+
   for (int i = 0; i < _nPoints; ++i) {
     std::cout << '\r' << i << '/' << _nPoints << std::flush;
+
     Quaternion c = closest(_volume[i]);
 
-    //find the neg-left-front-down grid point nearest to c
-    float w0 = (int)(c.w/_h) *_h;
-    float x0 = (int)(c.x/_h) *_h;
-    float y0 = (int)(c.y/_h) *_h;
-    float z0 = (int)(c.z/_h) *_h;
+    // Convert c's coordinates to floating-point grid indices
+    // Use round() to snap to the nearest integer — this is robust to the
+    // accumulated floating-point error in c (which is a float computed from
+    // operations on _h, itself not exactly representable in binary).
+    // We take the floor manually: grid index of the lower-left corner.
+    float fw = (c.w - _wMin) / _h;
+    float fx = (c.x - _xMin) / _h;
+    float fy = (c.y - _yMin) / _h;
+    float fz = (c.z - _zMin) / _h;
 
-    //find the indexes of the cubic nearest points to c
-    for (int k = 0; k < _nPoints; ++k) {
-      Quaternion s = _volume[k];
+    // Lower corner indices (clamp to valid range)
+    int iw = std::clamp((int)std::floor(fw), 0, _wPoints - 2);
+    int ix = std::clamp((int)std::floor(fx), 0, _xPoints - 2);
+    int iy = std::clamp((int)std::floor(fy), 0, _yPoints - 2);
+    int iz = std::clamp((int)std::floor(fz), 0, _zPoints - 2);
 
-      if      (s == Quaternion{w0,    x0,    y0,    z0   })
-        _projection[i].first[0] = k;
-      else if (s == Quaternion{w0,    x0,    y0,    z0+_h})
-        _projection[i].first[1] = k;
-      else if (s == Quaternion{w0,    x0,    y0+_h, z0   })
-        _projection[i].first[2] = k;
-      else if (s == Quaternion{w0,    x0,    y0+_h, z0+_h})
-        _projection[i].first[3] = k;
-      else if (s == Quaternion{w0,    x0+_h, y0,    z0   })
-        _projection[i].first[4] = k;
-      else if (s == Quaternion{w0,    x0+_h, y0,    z0+_h})
-        _projection[i].first[5] = k;
-      else if (s == Quaternion{w0,    x0+_h, y0+_h, z0   })
-        _projection[i].first[6] = k;
-      else if (s == Quaternion{w0,    x0+_h, y0+_h, z0+_h})
-        _projection[i].first[7] = k;
-      else if (s == Quaternion{w0+_h, x0,    y0,    z0   })
-        _projection[i].first[8] = k;
-      else if (s == Quaternion{w0+_h, x0,    y0,    z0+_h})
-        _projection[i].first[9] = k;
-      else if (s == Quaternion{w0+_h, x0,    y0+_h, z0   })
-        _projection[i].first[10] = k;
-      else if (s == Quaternion{w0+_h, x0,    y0+_h, z0+_h})
-        _projection[i].first[11] = k;
-      else if (s == Quaternion{w0+_h, x0+_h, y0,    z0   })
-        _projection[i].first[12] = k;
-      else if (s == Quaternion{w0+_h, x0+_h, y0,    z0+_h})
-        _projection[i].first[13] = k;
-      else if (s == Quaternion{w0+_h, x0+_h, y0+_h, z0   })
-        _projection[i].first[14] = k;
-      else if (s == Quaternion{w0+_h, x0+_h, y0+_h, z0+_h})
-        _projection[i].first[15] = k;
-    }
+    // Interpolation fractions (distance from lower corner, in [0,1])
+    float wd = std::clamp(fw - (float)iw, 0.f, 1.f);
+    float xd = std::clamp(fx - (float)ix, 0.f, 1.f);
+    float yd = std::clamp(fy - (float)iy, 0.f, 1.f);
+    float zd = std::clamp(fz - (float)iz, 0.f, 1.f);
 
-    //find the weights of the interpolation
-    float wd = (c.w - w0) /_h;
-    float xd = (c.x - x0) /_h;
-    float yd = (c.y - y0) /_h;
-    float zd = (c.z - z0) /_h;
+    // Base linear index of the lower-left-front-bottom corner
+    int base = iw * strideW + ix * strideX + iy * strideY + iz * strideZ;
 
-    _projection[i].second[0] = (1-wd) * (1-xd) * (1-yd) * (1-zd);
-    _projection[i].second[1] = (1-wd) * (1-xd) * (1-yd) *   zd;
-    _projection[i].second[2] = (1-wd) * (1-xd) *   yd   * (1-zd);
-    _projection[i].second[3] = (1-wd) * (1-xd) *   yd   *   zd;
-    _projection[i].second[4] = (1-wd) *   xd   * (1-yd) * (1-zd);
-    _projection[i].second[5] = (1-wd) *   xd   * (1-yd) *   zd;
-    _projection[i].second[6] = (1-wd) *   xd   *   yd   * (1-zd);
-    _projection[i].second[7] = (1-wd) *   xd   *   yd   *   zd;
-    _projection[i].second[8] =   wd   * (1-xd) * (1-yd) * (1-zd);
-    _projection[i].second[9] =   wd   * (1-xd) * (1-yd) *   zd;
-    _projection[i].second[10] =  wd   * (1-xd) *   yd   * (1-zd);
-    _projection[i].second[11] =  wd   * (1-xd) *   yd   *   zd;
-    _projection[i].second[12] =  wd   *   xd   * (1-yd) * (1-zd);
-    _projection[i].second[13] =  wd   *   xd   * (1-yd) *   zd;
-    _projection[i].second[14] =  wd   *   xd   *   yd   * (1-zd);
-    _projection[i].second[15] =  wd   *   xd   *   yd   *   zd;
+    // The 16 vertices of the 4D unit hypercube (w,x,y,z) in {0,1}^4,
+    // ordered to match the weight layout used everywhere else in the code.
+    _projection[i].first[0]  = base;
+    _projection[i].first[1]  = base                          + strideZ;
+    _projection[i].first[2]  = base             + strideY;
+    _projection[i].first[3]  = base             + strideY    + strideZ;
+    _projection[i].first[4]  = base + strideX;
+    _projection[i].first[5]  = base + strideX                + strideZ;
+    _projection[i].first[6]  = base + strideX   + strideY;
+    _projection[i].first[7]  = base + strideX   + strideY    + strideZ;
+    _projection[i].first[8]  = base + strideW;
+    _projection[i].first[9]  = base + strideW                + strideZ;
+    _projection[i].first[10] = base + strideW   + strideY;
+    _projection[i].first[11] = base + strideW   + strideY    + strideZ;
+    _projection[i].first[12] = base + strideW   + strideX;
+    _projection[i].first[13] = base + strideW   + strideX    + strideZ;
+    _projection[i].first[14] = base + strideW   + strideX    + strideY;
+    _projection[i].first[15] = base + strideW   + strideX    + strideY + strideZ;
+
+    // Trilinear interpolation weights (identical formula to the original code)
+    _projection[i].second[0]  = (1-wd) * (1-xd) * (1-yd) * (1-zd);
+    _projection[i].second[1]  = (1-wd) * (1-xd) * (1-yd) *    zd;
+    _projection[i].second[2]  = (1-wd) * (1-xd) *    yd  * (1-zd);
+    _projection[i].second[3]  = (1-wd) * (1-xd) *    yd  *    zd;
+    _projection[i].second[4]  = (1-wd) *    xd  * (1-yd) * (1-zd);
+    _projection[i].second[5]  = (1-wd) *    xd  * (1-yd) *    zd;
+    _projection[i].second[6]  = (1-wd) *    xd  *    yd  * (1-zd);
+    _projection[i].second[7]  = (1-wd) *    xd  *    yd  *    zd;
+    _projection[i].second[8]  =    wd  * (1-xd) * (1-yd) * (1-zd);
+    _projection[i].second[9]  =    wd  * (1-xd) * (1-yd) *    zd;
+    _projection[i].second[10] =    wd  * (1-xd) *    yd  * (1-zd);
+    _projection[i].second[11] =    wd  * (1-xd) *    yd  *    zd;
+    _projection[i].second[12] =    wd  *    xd  * (1-yd) * (1-zd);
+    _projection[i].second[13] =    wd  *    xd  * (1-yd) *    zd;
+    _projection[i].second[14] =    wd  *    xd  *    yd  * (1-zd);
+    _projection[i].second[15] =    wd  *    xd  *    yd  *    zd;
   }
 
   auto end_time = std::chrono::high_resolution_clock::now();

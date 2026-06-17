@@ -30,7 +30,16 @@ class Grid4 {
 
   float _t;
   float _h;
-  float _delta;
+
+  // grid dimensions and origins (needed for index arithmetic in createProjection)
+  int _wPoints;
+  int _xPoints;
+  int _yPoints;
+  int _zPoints;
+  float _wMin;
+  float _xMin;
+  float _yMin;
+  float _zMin;
 
   public:
   // ATTENZIONE
