@@ -2,7 +2,6 @@
 #include "params.hpp"
 
 #include <algorithm>
-#include <chrono>
 #include <cmath>
 #include <fstream>
 #include <iostream>
@@ -151,7 +150,7 @@ Grid4::Grid4(std::string surfFile, std::string relFile, double T)
 	: _nPoints{0},
     _t{T/4},
     _wPoints{0}, _xPoints{0}, _yPoints{0}, _zPoints{0},
-    _wMin{0.f}, _xMin{0.f}, _yMin{0.f}, _zMin{0.f}
+    _wMin{0.}, _xMin{0.}, _yMin{0.}, _zMin{0.}
 {
   if (!loadSurface(surfFile)) {
 		throw std::runtime_error{"loadSurface() cannot open file."};
@@ -291,7 +290,7 @@ void Grid4::project() {
 
   for (int i = 0; i < _nPoints; ++i) {
     double rho = _rho[i];
-    if (std::abs(rho) <= 0.f) { continue; }
+    if (rho == 0.) { continue; }
     std::pair<int[16], double[16]>& cubic = _projection[i];
     for (int j = 0; j < 16; ++j) {
       sphere_rho[cubic.first[j]] += rho * cubic.second[j];
@@ -338,7 +337,6 @@ void Grid4::fillFirstRho() {
 }
 
 void Grid4::createProjection() {
-  auto start_time = std::chrono::high_resolution_clock::now();
   std::cout << "Constructing projection...\n";
   _projection = new std::pair<int[16], double[16]>[_nPoints];
 
@@ -403,7 +401,7 @@ void Grid4::createProjection() {
     _projection[i].first[14] = base + strideW   + strideX    + strideY;
     _projection[i].first[15] = base + strideW   + strideX    + strideY + strideZ;
 
-    // Trilinear interpolation weights (identical formula to the original code)
+    // Trilinear interpolation weights
     _projection[i].second[0]  = (1-wd) * (1-xd) * (1-yd) * (1-zd);
     _projection[i].second[1]  = (1-wd) * (1-xd) * (1-yd) *    zd;
     _projection[i].second[2]  = (1-wd) * (1-xd) *    yd  * (1-zd);
@@ -422,10 +420,7 @@ void Grid4::createProjection() {
     _projection[i].second[15] =    wd  *    xd  *    yd  *    zd;
   }
 
-  auto end_time = std::chrono::high_resolution_clock::now();
-  auto duration = std::chrono::duration_cast<std::chrono::minutes>(
-    end_time - start_time);
-  std::cout << "\tDone! (" << duration.count() << " minutes)\n";
+  std::cout << "\tDone!\n";
 }
 
 Quaternion Grid4::closest(Quaternion const& p) {
@@ -666,9 +661,4 @@ double Grid4::derij(int pointIndex, int dir1, int dir2) const {
   }
 
   return result / (_h * _h * 4);
-}
-
-int Grid4::sgn(int val1, int val2) {
-  if (val1 < 0 || val2 < 0) { return -1; }
-  return 1;
 }
