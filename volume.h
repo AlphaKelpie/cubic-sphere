@@ -2,7 +2,6 @@
 #define VOLUME_H
 
 #include "utils.hpp"
-// #include <vector>
 #include <ostream>
 
 //to do: template class T
@@ -25,4 +24,4 @@ class Volume {
   friend std::ostream& operator<<(std::ostream& os, const Volume& obj);
 };
 
-#endif  //SURFACE_H
+#endif  //VOLUME_H

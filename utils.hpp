@@ -23,7 +23,7 @@ struct Point
   }
 
   friend std::ostream& operator<<(std::ostream& os, const Point& obj) {
-    os << '(' << obj.x << ", " << obj.y << ", " << obj.z << ')';
+    os << obj.x << ", " << obj.y << ", " << obj.z;
     return os;
   }
 
@@ -74,7 +74,7 @@ struct Quaternion
   }
 
   friend std::ostream& operator<<(std::ostream& os, const Quaternion& obj) {
-    os << '(' << obj.w << ", " << obj.x << ", " << obj.y << ", " << obj.z << ')';
+    os << obj.w << ", " << obj.x << ", " << obj.y << ", " << obj.z;
     return os;
   }
 

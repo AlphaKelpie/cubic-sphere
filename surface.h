@@ -4,14 +4,14 @@
 #include "utils.hpp"
 #include <ostream>
 
-//to do: template class T
+template<typename T>
 class Surface {
   int _nPoints;
-  Point* _data;
+  T* _data;
   
  public:
-  Surface(int nPoints = 0, Point data = Point{});
-  Surface(int nPoints, Point* data);
+  Surface(int nPoints = 0, T data = Point{});
+  Surface(int nPoints, T* data);
   Surface(const Surface &src);            //copy constructor
   Surface(Surface &&src);			            //move constructor
   Surface& operator=(const Surface &src); //copy assignment
@@ -19,9 +19,15 @@ class Surface {
   ~Surface();                             //destructor
 
   int nPoints() { return _nPoints; };
-  Point operator[](int index) const { return _data[index]; };
+  T operator[](int index) const { return _data[index]; };
 
-  friend std::ostream& operator<<(std::ostream& os, const Surface& obj);
+  friend std::ostream& operator<<(std::ostream& os, const Surface<T>& obj) {
+    for (int i = 0; i < obj._nPoints; ++i) {
+      os << obj._data[i] << '\n';  // chiama operator<<(ostream, T)
+    }
+    return os;
+  }
 };
 
+#include "surface.cpp"
 #endif  //SURFACE_H

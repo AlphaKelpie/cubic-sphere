@@ -15,7 +15,7 @@ class Grid3 {
   int _nPoints;
 
   // points in the volume
-  Surface _volume;
+  Surface<Point> _volume;
   
   // 8 grid points around projection of each point:
   // first: array of index in _s of the points

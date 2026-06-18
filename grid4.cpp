@@ -139,7 +139,7 @@ Grid4::Grid4(Interval w, Interval x, Interval y, Interval z, double T, double h)
     throw std::runtime_error("Error: _neighbour index different than _nPoints");
   }
 
-	_volume = Volume(_nPoints, temp);
+	_volume = Surface(_nPoints, temp);
 	delete[] temp;
   std::cout << "\tDone!\n";
 
@@ -480,7 +480,7 @@ bool Grid4::loadSurface(std::string filename) {
     fin >> temp[i].z;
   }
 
-  _volume = Volume(_nPoints, temp);
+  _volume = Surface(_nPoints, temp);
   delete[] temp;
 
   fin.close();
