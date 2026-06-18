@@ -2,7 +2,6 @@
 #define SURFACE_H
 
 #include "utils.hpp"
-#include <vector>
 #include <ostream>
 
 //to do: template class T

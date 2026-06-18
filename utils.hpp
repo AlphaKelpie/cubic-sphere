@@ -15,11 +15,8 @@ struct Point
   double z = 0;
 
   friend bool operator==(const Point& lhs, const Point& rhs) {
-    /*if(std::abs(lhs.x-rhs.x) < std::numeric_limits<double>::epsilon() &&
-     std::abs(lhs.y-rhs.y) < std::numeric_limits<double>::epsilon() &&
-     std::abs(lhs.z-rhs.z) < std::numeric_limits<double>::epsilon()) {
-    */
-    if(std::abs(lhs.x-rhs.x) <= 1E-14 && std::abs(lhs.y-rhs.y) <= 1E-14 && std::abs(lhs.z-rhs.z) <= 1E-14)
+    if(std::abs(lhs.x-rhs.x) <= 1E-14 && std::abs(lhs.y-rhs.y) <= 1E-14 &&
+      std::abs(lhs.z-rhs.z) <= 1E-14)
       return true;
 
     return false; 
@@ -30,7 +27,7 @@ struct Point
     return os;
   }
 
-  double operator[](int coordinate) {
+  double operator[](int coordinate) const {
     switch (coordinate)
     {
     case 0:
@@ -50,11 +47,13 @@ struct Point
     }
   }
 
-  double D(int i) {
+  // ATTENZIONE const
+  double D(int i) const {
     return x*x + y*y + z*z - this->operator[](i)*this->operator[](i);
   }
 
-  double D(int i, int j) {
+  // ATTENZIONE const
+  double D(int i, int j) const {
     return -this->operator[](i) * this->operator[](j);
   }
 };
@@ -102,17 +101,17 @@ struct Quaternion
     }
   }
 
+  // ATTENZIONE const
   double D(int i) const {
-    // ATTENZIONE
     return w*w + x*x + y*y + z*z - this->operator[](i)*this->operator[](i);
   }
 
+  // ATTENZIONE const
   double D(int i, int j) const {
-    // ATTENZIONE
     return -this->operator[](i) * this->operator[](j);
   }
 };
-  
+
 inline double absolute(double x) {
   if (x < 0)
     return -x;

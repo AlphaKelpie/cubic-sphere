@@ -1,34 +1,49 @@
+#include "params.hpp"
 #include "grid3.h"
 
+#include <format>
 #include <iostream>
 #include <string>
 
-int main() {
+int main(int argc, char* argv[]) {
+  if (argc == 2) {
+    Params::load(argv[1]);
+  } else {
+    Params::load("params.dat");
+  }
+
   try
   {
-    std::string const path = "./data/test_";
+    std::string const path = Params::get().path;
     {
       std::cout << "Creating\n";
-      Grid3 g({0.,10.}, {0.,10.}, {0.,10.}, 40., .1);
+      Grid3 g(Params::get().x,
+        Params::get().y,
+        Params::get().z,
+        Params::get().T,
+        Params::get().h
+      );
 
       std::cout << "Saving\n";
-      g.saveRelations(path);
+      g.saveProjection(path);
+      g.saveNeighbour(path);
       g.saveRho(path + "init_");
       g.saveSurface(path);
     }
 
     {
       std::cout << "Loading\n";
-      Grid3 g(path, path, 40.);
+      Grid3 g(path, path, Params::get().T);
 
       std::cout << "Evolving\n";
-      for (int step = 100; step < 2002; step+=100) {
+      for (int step = Params::get().sim; step < Params::get().step;
+          step+=Params::get().sim) {
         std::cout << "Step " << step << ": " << std::flush;
-        for (int sim = 0; sim < 100; ++sim) {
+        for (int sim = 0; sim < Params::get().sim; ++sim) {
           g.evolve();
           // break;
         }
-        g.saveRho(path + "evolving_" + std::to_string(step));
+        g.saveRho(path + "evolving_" + std::format("{:04}", step) + '_');
         // break;
       }
 

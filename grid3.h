@@ -20,7 +20,7 @@ class Grid3 {
   // 8 grid points around projection of each point:
   // first: array of index in _s of the points
   // second: array of weights
-  std::pair<int[8], float[8]>* _projection;
+  std::pair<int[8], double[8]>* _projection;
   
   // 19 grid points around each point and itself
   Neighbours* _neighbour;
@@ -28,29 +28,37 @@ class Grid3 {
   // density
   Function _rho;
 
-  float _t;
-  float _h;
-  float _delta;
+  double _t;
+  double _h;
+
+  // grid dimensions and origins (needed for index arithmetic in createProjection)
+  int _xPoints;
+  int _yPoints;
+  int _zPoints;
+  double _xMin;
+  double _yMin;
+  double _zMin;
 
   public:
   Grid3(Interval x = {0,10},
     Interval y = {0,10},
     Interval z = {0,10},
-    float T = 40.,
-    float h = 0.1);
-  Grid3(std::string surfFile, std::string realFile, float T);
+    double T = 40.,
+    double h = 0.1);
+  Grid3(std::string surfFile, std::string realFile, double T);
   ~Grid3();
 
-  void saveRelations(std::string filename = "simulation");
+  void saveProjection(std::string filename = "simulation");
+  void saveNeighbour(std::string filename = "simulation");
   void saveSurface(std::string filename = "simulation");
   void saveRho(std::string filename = "simulation");
 
-  void evolve(float dt = 0);
+  void evolve(double dt = 0);
   void project();
 
   private:
   //signed distance from the sphere
-  float phi(float x, float y, float z);
+  double phi(double x, double y, double z);
 
   //create the first rho value
   void createRho();
@@ -67,20 +75,18 @@ class Grid3 {
   //load the map between each surface point 'p' and the interpolation(closest(neighbour(p))).
   //Returns false if file is not found.
   bool loadSurface(std::string filename = "simulation");
-  bool loadRelations(std::string filename = "simulation");
+  bool loadProjection(std::string filename = "simulation");
+  bool loadNeighbour(std::string filename = "simulation");
   bool loadRho(std::string filename = "simulation");
 
   //first derivative along one direction
-  float der1(int pointIndex, int direction) const;
+  double der1(int pointIndex, int direction) const;
 
   //second derivative along the same direction
-  float der2(int pointIndex, int direction) const;
+  double der2(int pointIndex, int direction) const;
 
   //second mix derivative along two different directions
-  float derij(int pointIndex, int dir1, int dir2) const;
-
-  //logic end of int between -1 and +1
-  int sgn(int val1, int val2);
+  double derij(int pointIndex, int dir1, int dir2) const;
 };
 
 #endif
