@@ -32,127 +32,103 @@ Grid4::Grid4(Interval w, Interval x, Interval y, Interval z, double T, double h)
 
   std::cout << "Construct volume and neighbour...\n";
 	//for every point of the descrete domain..
-  int neg;
-  int pos;
-	int left;
-	int right;
-	int front;
-	int behind;
-	int down;
-	int top;
+  bool neg;
+  bool pos;
+	bool left;
+	bool right;
+	bool front;
+	bool behind;
+	bool down;
+	bool top;
   int index = 0;
-  for (float m = w.min; m < w.max + 1E-3; m+=_h) {
-    neg = (m <= w.min) ? -1 : 1;
-    pos = (m >= w.max - _h) ? -1 : 1;
-    for (float i = x.min; i < x.max + 1E-3; i+=_h) {
-      left = (i <= x.min) ? -1 : 1;
-      right = (i >= x.max - _h) ? -1 : 1;
-      for (float j = y.min; j < y.max + 1E-3; j+=_h) {
-        front = (j <= y.min) ? -1 : 1;
-        behind = (j >= y.max - _h) ? -1 : 1;
-        for (float k = z.min; k < z.max + 1E-3; k+=_h) {
+  double m;
+  double i;
+  double j;
+  double k;
+  for (short mi = 0; mi < _wPoints; ++mi) {
+    m = w.min + _h * mi;
+    neg = (mi <= 0) ? false : true;
+    pos = (mi >= _wPoints - 1) ? false : true;
+    for (short ii = 0; ii < _xPoints; ++ii) {
+      i = x.min + _h * ii;
+      left = (ii <= 0) ? false : true;
+      right = (ii >= _xPoints - 1) ? false : true;
+      for (short ji = 0; ji < _yPoints; ++ji) {
+        j = y.min + _h * ji;
+        front = (ji <= 0) ? false : true;
+        behind = (ji >= _yPoints - 1) ? false : true;
+        for (short ki = 0; ki < _zPoints; ++ki) {
+          k = z.min + _h * ki;
+          down = (ki <= 0) ? false : true;
+          top = (ki >= _zPoints - 1) ? false : true;
           std::cout << '\r' << index << '/' << _nPoints << std::flush;
-          down = (k <= z.min) ? -1 : 1;
-          top = (k >= z.max - _h) ? -1 : 1;
           //..add it to the volume and..
           temp[index] = {m, i, j, k};
           //..create corresponding neighbour
           _neighbour[index].point[0] = index;   // itself
-          _neighbour[index].point[1] = std::max(
-            abs(index - _xPoints * _yPoints * _zPoints) * neg, -1);
+          _neighbour[index].point[1] = (neg) ? (index - _xPoints * _yPoints * _zPoints) : -1;
 
-          _neighbour[index].point[2] = std::max(
-            abs(index + _xPoints * _yPoints * _zPoints) * pos, -1);
+          _neighbour[index].point[2] = (pos) ? (index + _xPoints * _yPoints * _zPoints) : -1;
 
-          _neighbour[index].point[3] = std::max(
-            abs(index - _yPoints * _zPoints) * left, -1);
+          _neighbour[index].point[3] = (left) ? (index - _yPoints * _zPoints) : -1;
 
-          _neighbour[index].point[4] = std::max(
-            abs(index + _yPoints * _zPoints) * right, -1);
+          _neighbour[index].point[4] = (right) ? (index + _yPoints * _zPoints) : -1;
 
-          _neighbour[index].point[5] = std::max(
-            abs(index - _zPoints) * front, -1);
+          _neighbour[index].point[5] = (front) ? (index - _zPoints) : -1;
 
-          _neighbour[index].point[6] = std::max(
-            abs(index + _zPoints) * behind, -1);
+          _neighbour[index].point[6] = (behind) ? (index + _zPoints) : -1;
 
-          _neighbour[index].point[7] = std::max(
-            abs(index - 1) * down, -1);
+          _neighbour[index].point[7] = (down) ? (index - 1) : -1;
 
-          _neighbour[index].point[8] = std::max(
-            abs(index + 1) * top, -1);
+          _neighbour[index].point[8] = (top) ? (index + 1) : -1;
 
-          _neighbour[index].point[9] = std::max(
-            abs(index - (_xPoints + 1) * _yPoints * _zPoints) * sgn(neg, left), -1);
+          _neighbour[index].point[9] = (neg && left) ? (index - (_xPoints + 1) * _yPoints * _zPoints) : -1;
 
-          _neighbour[index].point[10] = std::max(
-            abs(index - (_xPoints - 1) * _yPoints * _zPoints) * sgn(neg, right), -1);
+          _neighbour[index].point[10] = (neg && right) ? (index - (_xPoints - 1) * _yPoints * _zPoints) : -1;
 
-          _neighbour[index].point[11] = std::max(
-            abs(index - (_xPoints * _yPoints + 1) * _zPoints) * sgn(neg, front), -1);
+          _neighbour[index].point[11] = (neg && front) ? (index - (_xPoints * _yPoints + 1) * _zPoints) : -1;
 
-          _neighbour[index].point[12] = std::max(
-            abs(index - (_xPoints * _yPoints - 1) * _zPoints) * sgn(neg, behind), -1);
+          _neighbour[index].point[12] = (neg && behind) ? (index - (_xPoints * _yPoints - 1) * _zPoints) : -1;
 
-          _neighbour[index].point[13] = std::max(
-            abs(index - (_xPoints * _yPoints * _zPoints + 1)) * sgn(neg, down), -1);
+          _neighbour[index].point[13] = (neg && down) ? (index - (_xPoints * _yPoints * _zPoints + 1)) : -1;
 
-          _neighbour[index].point[14] = std::max(
-            abs(index - (_xPoints * _yPoints * _zPoints - 1)) * sgn(neg, top), -1);
+          _neighbour[index].point[14] = (neg && top) ? (index - (_xPoints * _yPoints * _zPoints - 1)) : -1;
 
-          _neighbour[index].point[15] = std::max(
-            abs(index + (_xPoints - 1) * _yPoints * _zPoints) * sgn(pos, left), -1);
+          _neighbour[index].point[15] = (pos && left) ? (index + (_xPoints - 1) * _yPoints * _zPoints) : -1;
 
-          _neighbour[index].point[16] = std::max(
-            abs(index + (_xPoints + 1) * _yPoints * _zPoints) * sgn(pos, right), -1);
+          _neighbour[index].point[16] = (pos && right) ? (index + (_xPoints + 1) * _yPoints * _zPoints) : -1;
 
-          _neighbour[index].point[17] = std::max(
-            abs(index + (_xPoints * _yPoints - 1) * _zPoints) * sgn(pos, front), -1);
+          _neighbour[index].point[17] = (pos && front) ? (index + (_xPoints * _yPoints - 1) * _zPoints) : -1;
 
-          _neighbour[index].point[18] = std::max(
-            abs(index + (_xPoints * _yPoints + 1) * _zPoints) * sgn(pos, behind), -1);
+          _neighbour[index].point[18] = (pos && behind) ? (index + (_xPoints * _yPoints + 1) * _zPoints) : -1;
 
-          _neighbour[index].point[19] = std::max(
-            abs(index + (_xPoints * _yPoints * _zPoints - 1)) * sgn(pos, down), -1);
+          _neighbour[index].point[19] = (pos && down) ? (index + (_xPoints * _yPoints * _zPoints - 1)) : -1;
 
-          _neighbour[index].point[20] = std::max(
-            abs(index + (_xPoints * _yPoints * _zPoints + 1)) * sgn(pos, top), -1);
+          _neighbour[index].point[20] = (pos && top) ? (index + (_xPoints * _yPoints * _zPoints + 1)) : -1;
 
-          _neighbour[index].point[21] = std::max(
-            abs(index - (_yPoints + 1) * _zPoints) * sgn(left, front), -1);
+          _neighbour[index].point[21] = (left && front) ? (index - (_yPoints + 1) * _zPoints) : -1;
 
-          _neighbour[index].point[22] = std::max(
-            abs(index - (_yPoints - 1) * _zPoints) * sgn(left, behind), -1);
+          _neighbour[index].point[22] = (left && behind) ? (index - (_yPoints - 1) * _zPoints) : -1;
 
-          _neighbour[index].point[23] = std::max(
-            abs(index - (_yPoints * _zPoints + 1)) * sgn(left, down), -1);
+          _neighbour[index].point[23] = (left && down) ? (index - (_yPoints * _zPoints + 1)) : -1;
 
-          _neighbour[index].point[24] = std::max(
-            abs(index - (_yPoints * _zPoints - 1)) * sgn(left, top), -1);
+          _neighbour[index].point[24] = (left && top) ? (index - (_yPoints * _zPoints - 1)) : -1;
 
-          _neighbour[index].point[25] = std::max(
-            abs(index + (_yPoints - 1) * _zPoints) * sgn(right, front), -1);
+          _neighbour[index].point[25] = (right && front) ? (index + (_yPoints - 1) * _zPoints) : -1;
 
-          _neighbour[index].point[26] = std::max(
-            abs(index + (_yPoints + 1) * _zPoints) * sgn(right, behind), -1);
+          _neighbour[index].point[26] = (right && behind) ? (index + (_yPoints + 1) * _zPoints) : -1;
 
-          _neighbour[index].point[27] = std::max(
-            abs(index + (_yPoints * _zPoints - 1)) * sgn(right, down), -1);
+          _neighbour[index].point[27] = (right && down) ? (index + (_yPoints * _zPoints - 1)) : -1;
 
-          _neighbour[index].point[28] = std::max(
-            abs(index + (_yPoints * _zPoints + 1)) * sgn(right, top), -1);
+          _neighbour[index].point[28] = (right && top) ? (index + (_yPoints * _zPoints + 1)) : -1;
 
-          _neighbour[index].point[29] = std::max(
-            abs(index - (_zPoints + 1)) * sgn(front, down), -1);
+          _neighbour[index].point[29] = (front && down) ? (index - (_zPoints + 1)) : -1;
 
-          _neighbour[index].point[30] = std::max(
-            abs(index - (_zPoints - 1)) * sgn(front, top), -1);
+          _neighbour[index].point[30] = (front && top) ? (index - (_zPoints - 1)) : -1;
 
-          _neighbour[index].point[31] = std::max(
-            abs(index + (_zPoints - 1)) * sgn(behind, down), -1);
+          _neighbour[index].point[31] = (behind && down) ? (index + (_zPoints - 1)) : -1;
 
-          _neighbour[index].point[32] = std::max(
-            abs(index + (_zPoints + 1)) * sgn(behind, top), -1);
+          _neighbour[index].point[32] = (behind && top) ? (index + (_zPoints + 1)) : -1;
 
           ++index;
         }
