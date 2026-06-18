@@ -4,20 +4,20 @@
 #include <ostream>
 
 struct Interval {
-  float min;
-  float max;
+  double min;
+  double max;
 };
 
 struct Point
 {
-  float x = 0;
-  float y = 0;
-  float z = 0;
+  double x = 0;
+  double y = 0;
+  double z = 0;
 
   friend bool operator==(const Point& lhs, const Point& rhs) {
-    /*if(std::abs(lhs.x-rhs.x) < std::numeric_limits<float>::epsilon() &&
-     std::abs(lhs.y-rhs.y) < std::numeric_limits<float>::epsilon() &&
-     std::abs(lhs.z-rhs.z) < std::numeric_limits<float>::epsilon()) {
+    /*if(std::abs(lhs.x-rhs.x) < std::numeric_limits<double>::epsilon() &&
+     std::abs(lhs.y-rhs.y) < std::numeric_limits<double>::epsilon() &&
+     std::abs(lhs.z-rhs.z) < std::numeric_limits<double>::epsilon()) {
     */
     if(std::abs(lhs.x-rhs.x) <= 1E-14 && std::abs(lhs.y-rhs.y) <= 1E-14 && std::abs(lhs.z-rhs.z) <= 1E-14)
       return true;
@@ -30,7 +30,7 @@ struct Point
     return os;
   }
 
-  float operator[](int coordinate) {
+  double operator[](int coordinate) {
     switch (coordinate)
     {
     case 0:
@@ -50,21 +50,21 @@ struct Point
     }
   }
 
-  float D(int i) {
+  double D(int i) {
     return x*x + y*y + z*z - this->operator[](i)*this->operator[](i);
   }
 
-  float D(int i, int j) {
+  double D(int i, int j) {
     return -this->operator[](i) * this->operator[](j);
   }
 };
 
 struct Quaternion
 {
-  float w = 0;
-  float x = 0;
-  float y = 0;
-  float z = 0;
+  double w = 0;
+  double x = 0;
+  double y = 0;
+  double z = 0;
 
   friend bool operator==(const Quaternion& lhs, const Quaternion& rhs) {
     if (std::abs(lhs.w-rhs.w) <= 1E-14 && std::abs(lhs.x-rhs.x) <= 1E-14 &&
@@ -79,7 +79,7 @@ struct Quaternion
     return os;
   }
 
-  float operator[](int coordinate) const {
+  double operator[](int coordinate) const {
     switch (coordinate)
     {
     case 0:
@@ -102,18 +102,18 @@ struct Quaternion
     }
   }
 
-  float D(int i) const {
+  double D(int i) const {
     // ATTENZIONE
     return w*w + x*x + y*y + z*z - this->operator[](i)*this->operator[](i);
   }
 
-  float D(int i, int j) const {
+  double D(int i, int j) const {
     // ATTENZIONE
     return -this->operator[](i) * this->operator[](j);
   }
 };
   
-inline float absolute(float x) {
+inline double absolute(double x) {
   if (x < 0)
     return -x;
   return x;

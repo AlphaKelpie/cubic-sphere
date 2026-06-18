@@ -10,13 +10,13 @@ class Params {
   public:
   // Parameters
   std::string path;
-  float T;
-  float h;
+  double T;
+  double h;
   Interval w;
   Interval x;
   Interval y;
   Interval z;
-  float radius;
+  double radius;
   Quaternion center;
   int step{2002};
   int sim{100};
@@ -44,18 +44,18 @@ class Params {
     }
 
     std::string key, value;
-    float w_min = 0.;
-    float w_max = 4.;
-    float x_min = 0.;
-    float x_max = 4.;
-    float y_min = 0.;
-    float y_max = 4.;
-    float z_min = 0.;
-    float z_max = 4.;
-    float cw = 2.;
-    float cx = 2.;
-    float cy = 2.;
-    float cz = 2.;
+    double w_min = 0.;
+    double w_max = 4.;
+    double x_min = 0.;
+    double x_max = 4.;
+    double y_min = 0.;
+    double y_max = 4.;
+    double z_min = 0.;
+    double z_max = 4.;
+    double cw = 2.;
+    double cx = 2.;
+    double cy = 2.;
+    double cz = 2.;
     while (fin >> key >> value) {
       if (key == "path") path = value;
       else if (key == "T") T = std::stof(value);

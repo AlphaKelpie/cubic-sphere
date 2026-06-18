@@ -7,14 +7,14 @@ Function::Function() : _nPoints{0}, _f{nullptr} {}
 
 Function::Function(int np)
   : _nPoints{np},
-    _f{new float[np]}
+    _f{new double[np]}
 {
   std::fill(_f, _f + np, 0.);
 }
 
 Function::Function(const Function &src)
   : _nPoints{src._nPoints},
-    _f{new float[_nPoints]}
+    _f{new double[_nPoints]}
 {
   std::copy(src._f, src._f + src._nPoints, _f);
 }
@@ -32,7 +32,7 @@ Function& Function::operator=(const Function &src) {
   if (this == &src) { return *this; }
 
   if (_nPoints != src._nPoints) {           // resource in *this cannot be reused
-    float* temp = new float[src._nPoints];  // allocate resource, if throws, do nothing
+    double* temp = new double[src._nPoints];  // allocate resource, if throws, do nothing
     delete[] _f;                         // release resource in *this
     _f = temp;
     _nPoints = src._nPoints;
@@ -59,25 +59,25 @@ Function::~Function() {
   delete[] _f;
 }
 
-float Function::operator[](int idx) const {
+double Function::operator[](int idx) const {
   if (idx >= _nPoints) {
-    throw std::out_of_range("Error: index in 'float Function::[]' bigger than _nPoints");
+    throw std::out_of_range("Error: index in 'double Function::[]' bigger than _nPoints");
   }
   if (idx < 0) { return 0.0; }
   return _f[idx];
 }
 
-float& Function::operator[](int idx) {
+double& Function::operator[](int idx) {
   if (idx >= _nPoints) {
-    throw std::out_of_range("Error: index in 'float& Function::[]' bigger than _nPoints");
+    throw std::out_of_range("Error: index in 'double& Function::[]' bigger than _nPoints");
   }
   if (idx < 0) {
-    throw std::out_of_range("Error: index in 'float& Function::[]' lower than 0");
+    throw std::out_of_range("Error: index in 'double& Function::[]' lower than 0");
   }
   return _f[idx];
 }
 
-float* Function::f() const {
+double* Function::f() const {
   return _f;
 }
 

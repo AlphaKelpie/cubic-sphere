@@ -8,7 +8,7 @@
 #include <iostream>
 #include <random>
 
-Grid4::Grid4(Interval w, Interval x, Interval y, Interval z, float T, float h)
+Grid4::Grid4(Interval w, Interval x, Interval y, Interval z, double T, double h)
 	: _nPoints{0},
 		_projection{nullptr},
 		_neighbour{nullptr},
@@ -171,7 +171,7 @@ Grid4::Grid4(Interval w, Interval x, Interval y, Interval z, float T, float h)
 	createRho();
 }
 
-Grid4::Grid4(std::string surfFile, std::string relFile, float T)
+Grid4::Grid4(std::string surfFile, std::string relFile, double T)
 	: _nPoints{0},
     _t{T/4},
     _wPoints{0}, _xPoints{0}, _yPoints{0}, _zPoints{0},
@@ -281,14 +281,14 @@ void Grid4::saveRho(std::string filename) {
   std::cout << "Done!\n";
 }
 
-void Grid4::evolve(float dt) {
+void Grid4::evolve(double dt) {
   if (dt == 0) {
     dt = 0.1 * _h * _h * _h * _h;
   }
 
   Function nextRho = Function(_nPoints);
 
-  float deltaRho = 0.;
+  double deltaRho = 0.;
   for (int idx = 0; idx < _nPoints; ++idx) {
     Quaternion const& p = _volume[idx];
 
@@ -314,9 +314,9 @@ void Grid4::project() {
   Function sphere_rho(_nPoints);
 
   for (int i = 0; i < _nPoints; ++i) {
-    float rho = _rho[i];
+    double rho = _rho[i];
     if (std::abs(rho) <= 0.f) { continue; }
-    std::pair<int[16], float[16]>& cubic = _projection[i];
+    std::pair<int[16], double[16]>& cubic = _projection[i];
     for (int j = 0; j < 16; ++j) {
       sphere_rho[cubic.first[j]] += rho * cubic.second[j];
     }
@@ -329,7 +329,7 @@ void Grid4::project() {
 // private
 
 
-float Grid4::phi(float w, float x, float y, float z) {
+double Grid4::phi(double w, double x, double y, double z) {
   Quaternion& c = Params::get().center;
   return std::sqrt(
       (w-c.w)*(w-c.w) + (x-c.x)*(x-c.x) + (y-c.y)*(y-c.y) + (z-c.z)*(z-c.z)
@@ -354,7 +354,7 @@ void Grid4::fillFirstRho() {
   std::uniform_int_distribution<int> init(0, _nPoints);
   int start_point = init(gen);
 
-  std::pair<int[16], float[16]>& cubic = _projection[start_point];
+  std::pair<int[16], double[16]>& cubic = _projection[start_point];
   for (int j = 0; j < 16; ++j) {
     if (cubic.first[j] >= 0)
     _rho[cubic.first[j]] = 1. * cubic.second[j];
@@ -364,7 +364,7 @@ void Grid4::fillFirstRho() {
 void Grid4::createProjection() {
   auto start_time = std::chrono::high_resolution_clock::now();
   std::cout << "Constructing projection...\n";
-  _projection = new std::pair<int[16], float[16]>[_nPoints];
+  _projection = new std::pair<int[16], double[16]>[_nPoints];
 
   // Precompute strides for the 4D grid (w is slowest index, z is fastest)
   const int strideW = _xPoints * _yPoints * _zPoints;
@@ -388,10 +388,10 @@ void Grid4::createProjection() {
     // accumulated floating-point error in c (which is a float computed from
     // operations on _h, itself not exactly representable in binary).
     // We take the floor manually: grid index of the lower-left corner.
-    float fw = (c.w - _wMin) / _h;
-    float fx = (c.x - _xMin) / _h;
-    float fy = (c.y - _yMin) / _h;
-    float fz = (c.z - _zMin) / _h;
+    double fw = (c.w - _wMin) / _h;
+    double fx = (c.x - _xMin) / _h;
+    double fy = (c.y - _yMin) / _h;
+    double fz = (c.z - _zMin) / _h;
 
     // Lower corner indices (clamp to valid range)
     int iw = std::clamp((int)std::floor(fw), 0, _wPoints - 2);
@@ -400,10 +400,10 @@ void Grid4::createProjection() {
     int iz = std::clamp((int)std::floor(fz), 0, _zPoints - 2);
 
     // Interpolation fractions (distance from lower corner, in [0,1])
-    float wd = std::clamp(fw - (float)iw, 0.f, 1.f);
-    float xd = std::clamp(fx - (float)ix, 0.f, 1.f);
-    float yd = std::clamp(fy - (float)iy, 0.f, 1.f);
-    float zd = std::clamp(fz - (float)iz, 0.f, 1.f);
+    double wd = std::clamp(fw - (double)iw, 0., 1.);
+    double xd = std::clamp(fx - (double)ix, 0., 1.);
+    double yd = std::clamp(fy - (double)iy, 0., 1.);
+    double zd = std::clamp(fz - (double)iz, 0., 1.);
 
     // Base linear index of the lower-left-front-bottom corner
     int base = iw * strideW + ix * strideX + iy * strideY + iz * strideZ;
@@ -453,12 +453,12 @@ void Grid4::createProjection() {
 }
 
 Quaternion Grid4::closest(Quaternion const& p) {
-  float w = p.w;
-  float x = p.x;
-  float y = p.y;
-  float z = p.z;
+  double w = p.w;
+  double x = p.x;
+  double y = p.y;
+  double z = p.z;
 
-  float gradient[4];   //nabla_h (phi)
+  double gradient[4];   //nabla_h (phi)
   gradient[0] = (phi(w+_h, x,    y,    z   ) - phi(w-_h, x,    y,    z   )) /(2*_h);
   gradient[1] = (phi(w,    x+_h, y   , z   ) - phi(w,    x-_h, y,    z   )) /(2*_h);
   gradient[2] = (phi(w,    x,    y+_h, z   ) - phi(w,    x,    y-_h, z   )) /(2*_h);
@@ -470,10 +470,10 @@ Quaternion Grid4::closest(Quaternion const& p) {
   }
 
   // | nabla_h (phi) |
-  float mod = std::sqrt(gradient[0]*gradient[0] + gradient[1]*gradient[1] +
+  double mod = std::sqrt(gradient[0]*gradient[0] + gradient[1]*gradient[1] +
     gradient[2]*gradient[2] + gradient[3]*gradient[3]);
 
-  float dist_wxyz = phi(w,x,y,z);
+  double dist_wxyz = phi(w,x,y,z);
 
   Quaternion r;
   r.w = w - gradient[0] * dist_wxyz / mod;
@@ -528,7 +528,7 @@ bool Grid4::loadProjection(std::string filename) {
     return false;
   }
 
-  _projection = new std::pair<int[16], float[16]>[_nPoints];
+  _projection = new std::pair<int[16], double[16]>[_nPoints];
   for (int i = 0; i < _nPoints; ++i) {
     for (int j = 0; j < 16; ++j) {
       fin >> _projection[i].first[j];
@@ -594,10 +594,10 @@ bool Grid4::loadRho(std::string filename) {
   return true;
 }
 
-float Grid4::der1(int pointIndex, int direction) const {
+double Grid4::der1(int pointIndex, int direction) const {
   Neighbours& near = _neighbour[pointIndex];
 
-  float result = 0.;
+  double result = 0.;
 
   switch (direction + 1)
   {
@@ -623,10 +623,10 @@ float Grid4::der1(int pointIndex, int direction) const {
 
 }
 
-float Grid4::der2(int pointIndex, int direction) const {
+double Grid4::der2(int pointIndex, int direction) const {
   Neighbours& near = _neighbour[pointIndex];
 
-  float result = 0.;
+  double result = 0.;
 
   switch (direction + 1)
   {
@@ -652,10 +652,10 @@ float Grid4::der2(int pointIndex, int direction) const {
   return result / (_h * _h);
 }
 
-float Grid4::derij(int pointIndex, int dir1, int dir2) const {
+double Grid4::derij(int pointIndex, int dir1, int dir2) const {
   Neighbours near = _neighbour[pointIndex];
 
-  float result = 0.;
+  double result = 0.;
 
   switch ((dir1 + 1) * (dir2 + 1))
   {
