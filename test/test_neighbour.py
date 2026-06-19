@@ -325,9 +325,9 @@ def main():
     if neighbour.shape[1] != 33:
         print(f"\nWrong number of neighbours per points: {neighbour.shape[1]}")
     
-    if neighbour.any(where=neighbour >= nPoints) :
+    if np.any(neighbour >= nPoints) :
         print("Too big index")
-    if neighbour.any(where=neighbour < -1) :
+    if np.any(neighbour < -1) :
         print("Too low index")
 
     test_surface(neighbour, nPoints)
