@@ -57,6 +57,7 @@ class Grid4 {
   void saveRho(std::string filename = "simulation");
 
   void evolve(double dt = 0);
+  void evolveCN(double dt = 0, int maxIter = 1000, double tol = 1e-10);
   void project();
 
   private:
@@ -90,6 +91,11 @@ class Grid4 {
 
   //second mix derivative along two different directions
   double derij(int pointIndex, int dir1, int dir2) const;
+
+  // overloads operating on an arbitrary Function (used by evolveCN)
+  double der1(int pointIndex, int direction, Function const& f) const;
+  double der2(int pointIndex, int direction, Function const& f) const;
+  double derij(int pointIndex, int dir1, int dir2, Function const& f) const;
 };
 
 #endif

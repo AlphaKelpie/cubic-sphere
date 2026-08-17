@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <random>
+#include <utility>
 
 Grid4::Grid4(Interval w, Interval x, Interval y, Interval z, double T, double h)
 	: _nPoints{0},
@@ -268,7 +269,7 @@ void Grid4::evolve(double dt) {
     Quaternion const& p = _volume[idx];
 
     for (int j = 0; j < 4; ++j) {
-      deltaRho = p[j] * (1 - 4) * der1(idx, j);
+      deltaRho += p[j] * (1 - 4) * der1(idx, j);
       for (int i = 0; i < 4; ++i) {
         if (i == j) {
           deltaRho += p.D(i) * der2(idx, i);
@@ -280,9 +281,71 @@ void Grid4::evolve(double dt) {
 
     deltaRho *= _t * dt;
     nextRho[idx] = _rho[idx] + deltaRho;
+    deltaRho = 0.;
   }
 
   _rho = nextRho;
+}
+
+void Grid4::evolveCN(double dt, int maxIter, double tol) {
+  if (dt == 0) {
+    dt = 0.1 * _h * _h * _h * _h;
+  }
+
+  double alpha = _t * dt * 0.5;
+
+  // Explicit half-step: rhs = rho^n + alpha * L(rho^n)
+  Function rhs(_nPoints);
+  for (int idx = 0; idx < _nPoints; ++idx) {
+    Quaternion const& p = _volume[idx];
+    double Lrho = 0.;
+    for (int j = 0; j < 4; ++j) {
+      Lrho += p[j] * (1 - 4) * der1(idx, j);
+      for (int i = 0; i < 4; ++i) {
+        if (i == j) {
+          Lrho += p.D(i) * der2(idx, i);
+        } else {
+          Lrho += p.D(i, j) * derij(idx, i, j);
+        }
+      }
+    }
+    rhs[idx] = _rho[idx] + alpha * Lrho;
+  }
+
+  // Solve [I - alpha*L] rho^{n+1} = rhs via fixed-point iteration
+  Function rhoA = _rho;
+  Function rhoB(_nPoints);
+
+  for (int iter = 0; iter < maxIter; ++iter) {
+    double maxDiff = 0.;
+
+    for (int idx = 0; idx < _nPoints; ++idx) {
+      Quaternion const& p = _volume[idx];
+      double Lrho = 0.;
+      for (int j = 0; j < 4; ++j) {
+        Lrho += p[j] * (1 - 4) * der1(idx, j, rhoA);
+        for (int i = 0; i < 4; ++i) {
+          if (i == j) {
+            Lrho += p.D(i) * der2(idx, i, rhoA);
+          } else {
+            Lrho += p.D(i, j) * derij(idx, i, j, rhoA);
+          }
+        }
+      }
+      rhoB[idx] = rhs[idx] + alpha * Lrho;
+
+      double diff = std::abs(rhoB[idx] - rhoA[idx]);
+      if (diff > maxDiff) maxDiff = diff;
+    }
+
+    std::swap(rhoA, rhoB);
+
+    if (maxDiff < tol) {
+      break;
+    }
+  }
+
+  _rho = std::move(rhoA);
 }
 
 void Grid4::project() {
@@ -660,5 +723,74 @@ double Grid4::derij(int pointIndex, int dir1, int dir2) const {
     break;
   }
 
+  return result / (_h * _h * 4);
+}
+
+double Grid4::der1(int pointIndex, int direction, Function const& f) const {
+  Neighbours& near = _neighbour[pointIndex];
+  double result = 0.;
+  switch (direction + 1) {
+  case 1: result = (f[near.point[2]] - f[near.point[1]]); break;
+  case 2: result = (f[near.point[4]] - f[near.point[3]]); break;
+  case 3: result = (f[near.point[6]] - f[near.point[5]]); break;
+  case 4: result = (f[near.point[8]] - f[near.point[7]]); break;
+  default:
+    throw std::invalid_argument(
+      "Error: invalid direction in der1 function: " + direction);
+    break;
+  }
+  return result / (_h * 2);
+}
+
+double Grid4::der2(int pointIndex, int direction, Function const& f) const {
+  Neighbours& near = _neighbour[pointIndex];
+  double result = 0.;
+  switch (direction + 1) {
+  case 1: result = f[near.point[2]] + f[near.point[1]]; break;
+  case 2: result = f[near.point[4]] + f[near.point[3]]; break;
+  case 3: result = f[near.point[6]] + f[near.point[5]]; break;
+  case 4: result = f[near.point[8]] + f[near.point[7]]; break;
+  default:
+    throw std::invalid_argument(
+      "Error: invalid direction in der2 function: " + direction);
+    break;
+  }
+  result -= (f[near.point[0]] * 2);
+  return result / (_h * _h);
+}
+
+double Grid4::derij(int pointIndex, int dir1, int dir2, Function const& f) const {
+  Neighbours near = _neighbour[pointIndex];
+  double result = 0.;
+  switch ((dir1 + 1) * (dir2 + 1)) {
+  case 2:
+    result = f[near.point[16]] - f[near.point[15]] -
+      f[near.point[10]] + f[near.point[9]];
+    break;
+  case 3:
+    result = f[near.point[18]] - f[near.point[17]] -
+      f[near.point[12]] + f[near.point[11]];
+    break;
+  case 4:
+    result = f[near.point[20]] - f[near.point[19]] -
+      f[near.point[14]] + f[near.point[13]];
+    break;
+  case 6:
+    result = f[near.point[26]] - f[near.point[25]] -
+      f[near.point[22]] + f[near.point[21]];
+    break;
+  case 8:
+    result = f[near.point[28]] - f[near.point[27]] -
+      f[near.point[24]] + f[near.point[23]];
+    break;
+  case 12:
+    result = f[near.point[32]] - f[near.point[31]] -
+      f[near.point[30]] + f[near.point[29]];
+    break;
+  default:
+    throw std::invalid_argument(
+      "Error: invalid direction in derij function: " + dir1 + ' ' + dir2);
+    break;
+  }
   return result / (_h * _h * 4);
 }

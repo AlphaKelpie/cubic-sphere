@@ -209,7 +209,7 @@ void Grid3::evolve(double dt) {
     Point p = _volume[idx];
 
     for (int j = 0; j < 3; ++j) {
-      deltaRho = p[j] * (1 - 3) * der1(idx, j);
+      deltaRho += p[j] * (1 - 3) * der1(idx, j);
       for (int i = 0; i < 3; ++i) {
         if (i == j) {
           deltaRho += p.D(i) * der2(idx, i);
@@ -221,6 +221,7 @@ void Grid3::evolve(double dt) {
 
     deltaRho *= _t * dt;
     nextRho[idx] = _rho[idx] + deltaRho;
+    deltaRho = 0.;
   }
 
   _rho = nextRho;
