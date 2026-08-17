@@ -10,7 +10,7 @@ class Surface {
   T* _data;
   
  public:
-  Surface(int nPoints = 0, T data = Point{});
+  Surface(int nPoints = 0, T data = T{});
   Surface(int nPoints, T* data);
   Surface(const Surface &src);            //copy constructor
   Surface(Surface &&src);			            //move constructor
