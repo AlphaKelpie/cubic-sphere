@@ -629,6 +629,18 @@ bool Grid4::loadRho(std::string filename) {
 }
 
 double Grid4::der1(int pointIndex, int direction) const {
+  return der1(pointIndex, direction, _rho);
+}
+
+double Grid4::der2(int pointIndex, int direction) const {
+  return der2(pointIndex, direction, _rho);
+}
+
+double Grid4::derij(int pointIndex, int dir1, int dir2) const {
+  return derij(pointIndex, dir1, dir2, _rho);
+}
+
+double Grid4::der1(int pointIndex, int direction, Function const& f) const {
   Neighbours& near = _neighbour[pointIndex];
 
   double result = 0.;
@@ -636,16 +648,16 @@ double Grid4::der1(int pointIndex, int direction) const {
   switch (direction + 1)
   {
   case 1: //w
-    result = (_rho[near.point[2]] - _rho[near.point[1]]);
+    result = (f[near.point[2]] - f[near.point[1]]);
     break;
   case 2: //x
-    result = (_rho[near.point[4]] - _rho[near.point[3]]);
+    result = (f[near.point[4]] - f[near.point[3]]);
     break;
   case 3: //y
-    result = (_rho[near.point[6]] - _rho[near.point[5]]);
+    result = (f[near.point[6]] - f[near.point[5]]);
     break;
   case 4: //z
-    result = (_rho[near.point[8]] - _rho[near.point[7]]);
+    result = (f[near.point[8]] - f[near.point[7]]);
     break;
   default:
     throw std::invalid_argument(
@@ -654,10 +666,9 @@ double Grid4::der1(int pointIndex, int direction) const {
   }
 
   return result / (_h * 2);
-
 }
 
-double Grid4::der2(int pointIndex, int direction) const {
+double Grid4::der2(int pointIndex, int direction, Function const& f) const {
   Neighbours& near = _neighbour[pointIndex];
 
   double result = 0.;
@@ -665,16 +676,16 @@ double Grid4::der2(int pointIndex, int direction) const {
   switch (direction + 1)
   {
   case 1: //ww
-    result = _rho[near.point[2]] + _rho[near.point[1]];
+    result = f[near.point[2]] + f[near.point[1]];
     break;
   case 2: //xx
-    result = _rho[near.point[4]] + _rho[near.point[3]];
+    result = f[near.point[4]] + f[near.point[3]];
     break;
   case 3: //yy
-    result = _rho[near.point[6]] + _rho[near.point[5]];
+    result = f[near.point[6]] + f[near.point[5]];
     break;
   case 4: //zz
-    result = _rho[near.point[8]] + _rho[near.point[7]];
+    result = f[near.point[8]] + f[near.point[7]];
     break;
   default:
     throw std::invalid_argument(
@@ -682,11 +693,11 @@ double Grid4::der2(int pointIndex, int direction) const {
     break;
   }
 
-  result -= (_rho[near.point[0]] * 2);
+  result -= (f[near.point[0]] * 2);
   return result / (_h * _h);
 }
 
-double Grid4::derij(int pointIndex, int dir1, int dir2) const {
+double Grid4::derij(int pointIndex, int dir1, int dir2, Function const& f) const {
   Neighbours near = _neighbour[pointIndex];
 
   double result = 0.;
@@ -694,96 +705,26 @@ double Grid4::derij(int pointIndex, int dir1, int dir2) const {
   switch ((dir1 + 1) * (dir2 + 1))
   {
   case 2: //wx || xw
-    result = _rho[near.point[16]] - _rho[near.point[15]] -
-      _rho[near.point[10]] + _rho[near.point[9]];
-    break;
-  case 3: //wy || yw
-    result = _rho[near.point[18]] - _rho[near.point[17]] -
-      _rho[near.point[12]] + _rho[near.point[11]];
-    break;
-  case 4: //wz || zw
-    result = _rho[near.point[20]] - _rho[near.point[19]] -
-      _rho[near.point[14]] + _rho[near.point[13]];
-    break;
-  case 6: //xy || yx
-    result = _rho[near.point[26]] - _rho[near.point[25]] -
-      _rho[near.point[22]] + _rho[near.point[21]];
-    break;
-  case 8: //xz || zx
-    result = _rho[near.point[28]] - _rho[near.point[27]] -
-      _rho[near.point[24]] + _rho[near.point[23]];
-    break;
-  case 12: //yz || zy
-    result = _rho[near.point[32]] - _rho[near.point[31]] -
-      _rho[near.point[30]] + _rho[near.point[29]];
-    break;
-  default:
-    throw std::invalid_argument(
-      "Error: invalid direction in derij function: " + dir1 + ' ' + dir2);
-    break;
-  }
-
-  return result / (_h * _h * 4);
-}
-
-double Grid4::der1(int pointIndex, int direction, Function const& f) const {
-  Neighbours& near = _neighbour[pointIndex];
-  double result = 0.;
-  switch (direction + 1) {
-  case 1: result = (f[near.point[2]] - f[near.point[1]]); break;
-  case 2: result = (f[near.point[4]] - f[near.point[3]]); break;
-  case 3: result = (f[near.point[6]] - f[near.point[5]]); break;
-  case 4: result = (f[near.point[8]] - f[near.point[7]]); break;
-  default:
-    throw std::invalid_argument(
-      "Error: invalid direction in der1 function: " + direction);
-    break;
-  }
-  return result / (_h * 2);
-}
-
-double Grid4::der2(int pointIndex, int direction, Function const& f) const {
-  Neighbours& near = _neighbour[pointIndex];
-  double result = 0.;
-  switch (direction + 1) {
-  case 1: result = f[near.point[2]] + f[near.point[1]]; break;
-  case 2: result = f[near.point[4]] + f[near.point[3]]; break;
-  case 3: result = f[near.point[6]] + f[near.point[5]]; break;
-  case 4: result = f[near.point[8]] + f[near.point[7]]; break;
-  default:
-    throw std::invalid_argument(
-      "Error: invalid direction in der2 function: " + direction);
-    break;
-  }
-  result -= (f[near.point[0]] * 2);
-  return result / (_h * _h);
-}
-
-double Grid4::derij(int pointIndex, int dir1, int dir2, Function const& f) const {
-  Neighbours near = _neighbour[pointIndex];
-  double result = 0.;
-  switch ((dir1 + 1) * (dir2 + 1)) {
-  case 2:
     result = f[near.point[16]] - f[near.point[15]] -
       f[near.point[10]] + f[near.point[9]];
     break;
-  case 3:
+  case 3: //wy || yw
     result = f[near.point[18]] - f[near.point[17]] -
       f[near.point[12]] + f[near.point[11]];
     break;
-  case 4:
+  case 4: //wz || zw
     result = f[near.point[20]] - f[near.point[19]] -
       f[near.point[14]] + f[near.point[13]];
     break;
-  case 6:
+  case 6: //xy || yx
     result = f[near.point[26]] - f[near.point[25]] -
       f[near.point[22]] + f[near.point[21]];
     break;
-  case 8:
+  case 8: //xz || zx
     result = f[near.point[28]] - f[near.point[27]] -
       f[near.point[24]] + f[near.point[23]];
     break;
-  case 12:
+  case 12: //yz || zy
     result = f[near.point[32]] - f[near.point[31]] -
       f[near.point[30]] + f[near.point[29]];
     break;
@@ -792,5 +733,6 @@ double Grid4::derij(int pointIndex, int dir1, int dir2, Function const& f) const
       "Error: invalid direction in derij function: " + dir1 + ' ' + dir2);
     break;
   }
+
   return result / (_h * _h * 4);
 }
