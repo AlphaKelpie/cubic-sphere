@@ -18,8 +18,8 @@ class Params {
   Interval z;
   double radius;
   Quaternion center;
-  int step{2002};
-  int sim{100};
+  int total{2002};
+  int step{100};
 
   // Global istance access
   static Params& get() {
@@ -73,8 +73,8 @@ class Params {
       else if (key == "cx") cx = std::stof(value);
       else if (key == "cy") cy = std::stof(value);
       else if (key == "cz") cz = std::stof(value);
-      else if (key == "step") step = std::stoi(value) + 2;
-      else if (key == "sim") sim = std::stoi(value);
+      else if (key == "total") total = std::stoi(value) + 2;
+      else if (key == "step") step = std::stoi(value);
     }
     w = {w_min, w_max};
     x = {x_min, x_max};

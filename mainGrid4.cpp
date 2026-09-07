@@ -38,11 +38,11 @@ int main(int argc, char* argv[]) {
       Grid4 g(path, path, Params::get().T);
 
       std::cout << "Evolving\n";
-      for (int step = Params::get().sim; step < Params::get().step;
-          step+=Params::get().sim) {
+      for (int step = Params::get().step; step < Params::get().total;
+          step+=Params::get().step) {
         std::cout << "Step " << step << ": " << std::flush;
-        for (int sim = 0; sim < Params::get().sim; ++sim) {
-          g.evolve();
+        for (int sim = 0; sim < Params::get().step; ++sim) {
+          g.evolveCN();
           // break;
         }
         g.saveRho(path + "evolving_" + std::format("{:04}", step) + '_');

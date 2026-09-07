@@ -1,4 +1,4 @@
-path data/test4_2_
+path data/sim_2
 T 40.
 h 0.1
 w_min 0.
@@ -14,5 +14,5 @@ cw 2.
 cx 2.
 cy 2.
 cz 2.
-step 4
-sim 2
+total 2
+step 1

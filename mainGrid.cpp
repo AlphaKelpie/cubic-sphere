@@ -36,10 +36,10 @@ int main(int argc, char* argv[]) {
       Grid3 g(path, path, Params::get().T);
 
       std::cout << "Evolving\n";
-      for (int step = Params::get().sim; step < Params::get().step;
-          step+=Params::get().sim) {
+      for (int step = Params::get().step; step < Params::get().total;
+          step+=Params::get().step) {
         std::cout << "Step " << step << ": " << std::flush;
-        for (int sim = 0; sim < Params::get().sim; ++sim) {
+        for (int sim = 0; sim < Params::get().step; ++sim) {
           g.evolve();
           // break;
         }
