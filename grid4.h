@@ -51,6 +51,11 @@ class Grid4 {
   Grid4(std::string surfFile, std::string realFile, double T);
   ~Grid4();
 
+  //set the first values of _rho
+  void fillFirstRho();
+  //set _rho provinding a _volume index point
+  void fillIdxRho(int idx = 1412880);
+
   void saveProjection(std::string filename = "simulation");
   void saveNeighbour(std::string filename = "simulation");
   void saveSurface(std::string filename = "simulation");
@@ -67,9 +72,6 @@ class Grid4 {
 
   //create the first rho value
   void createRho();
-
-  //set the first values of _rho
-  void fillFirstRho();
 
   //calculate points for projection
   void createProjection();

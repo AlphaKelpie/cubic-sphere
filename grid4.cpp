@@ -173,6 +173,24 @@ Grid4::~Grid4() {
 	delete[] _neighbour;
 }
 
+void Grid4::fillFirstRho() {
+  std::random_device seed;
+  // std::cout << "Debug: seed = " << seed() << '\n';
+  std::mt19937 gen(seed());
+  std::uniform_int_distribution<int> init(0, _nPoints);
+  int start_point = init(gen);
+
+  std::pair<int[16], double[16]>& cubic = _projection[start_point];
+  for (int j = 0; j < 16; ++j) {
+    if (cubic.first[j] >= 0)
+    _rho[cubic.first[j]] = 1. * cubic.second[j];
+  }
+}
+
+void Grid4::fillIdxRho(int idx) {
+  _rho[idx] = 1.;
+}
+
 void Grid4::saveProjection(std::string filename) {
 	// format:
   // first row: _nPoints
@@ -426,22 +444,6 @@ void Grid4::createRho() {
   }
 
   _rho = Function(_nPoints);
-
-  fillFirstRho();
-}
-
-void Grid4::fillFirstRho() {
-  std::random_device seed;
-  // std::cout << "Debug: seed = " << seed() << '\n';
-  std::mt19937 gen(seed());
-  std::uniform_int_distribution<int> init(0, _nPoints);
-  int start_point = init(gen);
-
-  std::pair<int[16], double[16]>& cubic = _projection[start_point];
-  for (int j = 0; j < 16; ++j) {
-    if (cubic.first[j] >= 0)
-    _rho[cubic.first[j]] = 1. * cubic.second[j];
-  }
 }
 
 void Grid4::createProjection() {
