@@ -25,6 +25,7 @@ int main(int argc, char* argv[]) {
         Params::get().T,
         Params::get().h
       );
+      g.fillFirstRho();
 
       std::cout << "Saving\n";
       g.saveProjection(path);
