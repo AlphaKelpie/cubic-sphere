@@ -348,6 +348,51 @@ void Grid4::evolveCN(double dt, int maxIter, double tol) {
   _rho = std::move(rhoA);
 }
 
+void Grid4::evolveCNDiff(double dt, int maxIter, double tol) {
+  if (dt == 0) {
+    dt = 0.1 * _h * _h * _h * _h;
+  }
+
+  double alpha = _t * dt * 0.5;
+
+  // Explicit half-step: rhs = rho^n + alpha * L(rho^n)
+  Function rhs(_nPoints);
+  for (int idx = 0; idx < _nPoints; ++idx) {
+    double Lrho = 0.;
+    for (int j = 0; j < 4; ++j) {
+      Lrho += der2(idx, j);
+    }
+    rhs[idx] = _rho[idx] + alpha * Lrho;
+  }
+
+  // Solve [I - alpha*L] rho^{n+1} = rhs via fixed-point iteration
+  Function rhoA = _rho;
+  Function rhoB(_nPoints);
+
+  for (int iter = 0; iter < maxIter; ++iter) {
+    double maxDiff = 0.;
+
+    for (int idx = 0; idx < _nPoints; ++idx) {
+      double Lrho = 0.;
+      for (int j = 0; j < 4; ++j) {
+        Lrho += der2(idx, j, rhoA);
+      }
+      rhoB[idx] = rhs[idx] + alpha * Lrho;
+
+      double diff = std::abs(rhoB[idx] - rhoA[idx]);
+      if (diff > maxDiff) maxDiff = diff;
+    }
+
+    std::swap(rhoA, rhoB);
+
+    if (maxDiff < tol) {
+      break;
+    }
+  }
+
+  _rho = std::move(rhoA);
+}
+
 void Grid4::project() {
   Function sphere_rho(_nPoints);
 

@@ -58,6 +58,7 @@ class Grid4 {
 
   void evolve(double dt = 0);
   void evolveCN(double dt = 0, int maxIter = 1000, double tol = 1e-10);
+  void evolveCNDiff(double dt = 0, int maxIter = 1000, double tol = 1e-10);
   void project();
 
   private:
