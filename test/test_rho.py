@@ -8,7 +8,7 @@ def test(filename):
         nPoints = int(f.readline())
     rhos = np.loadtxt(filename, skiprows=2)
     np.where(rhos == np.nan, 0., None)
-    print(nPoints, np.sum(rhos), np.min(rhos), np.max(rhos), np.count_nonzero(rhos))
+    print(nPoints, np.sum(rhos), np.min(rhos), np.max(rhos), np.count_nonzero(rhos > 1e-5))
     
 
 def main():
