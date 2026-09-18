@@ -350,7 +350,7 @@ void Grid4::evolveCN(double dt, int maxIter, double tol) {
           }
         }
       }
-      rhoB[idx] = _rho[idx] + alpha * Lrho;   // ATTENZIONE: Claude aveva messo rhs[idx], io ho messo _rho[idx]
+      rhoB[idx] = rhs[idx] + alpha * Lrho;
 
       double diff = std::abs(rhoB[idx] - rhoA[idx]);
       if (diff > maxDiff) maxDiff = diff;
