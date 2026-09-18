@@ -62,8 +62,8 @@ class Grid4 {
   void saveRho(std::string filename = "simulation");
 
   void evolve(double dt = 0);
-  void evolveCN(double dt = 0, int maxIter = 1000, double tol = 1e-10);
-  void evolveCNDiff(double dt = 0, int maxIter = 1000, double tol = 1e-10);
+  void evolveCN(double dt = 0, int maxIter = 1000, double tol = 1e-3);
+  void evolveCNDiff(double dt = 0, int maxIter = 1000, double tol = 1e-3);
   void project();
 
   private:
