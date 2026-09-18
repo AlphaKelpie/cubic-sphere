@@ -316,14 +316,14 @@ void Grid4::evolveCN(double dt, int maxIter, double tol) {
   Function rhs(_nPoints);
   for (int idx = 0; idx < _nPoints; ++idx) {
     Quaternion const& p = _volume[idx];
-    double Lrho = 0.;
-    for (int j = 0; j < 4; ++j) {
-      Lrho += p[j] * (1 - 4) * der1(idx, j);
-      for (int i = 0; i < 4; ++i) {
-        if (i == j) {
-          Lrho += p.D(i) * der2(idx, i);
-        } else {
-          Lrho += p.D(i, j) * derij(idx, i, j);
+    double Lrho = -_rho[idx]*(1-4)*4; // from sum_i[D'_i rho * a(x)]
+    for (int i = 0; i < 4; ++i) {
+      Lrho -= p[i]*(1-4)*der1(idx, i);  // from D'_i rho * a(x)
+      for (int j = 0; j < 4; ++j) {
+        if (i == j) { // from D''_ii rho * D
+          Lrho += der2(idx, i, p);
+        } else {  // from D''_ij rho * D
+          Lrho += derij(idx, i, j, p);
         }
       }
     }
@@ -339,18 +339,18 @@ void Grid4::evolveCN(double dt, int maxIter, double tol) {
 
     for (int idx = 0; idx < _nPoints; ++idx) {
       Quaternion const& p = _volume[idx];
-      double Lrho = 0.;
-      for (int j = 0; j < 4; ++j) {
-        Lrho += p[j] * (1 - 4) * der1(idx, j, rhoA);
-        for (int i = 0; i < 4; ++i) {
-          if (i == j) {
-            Lrho += p.D(i) * der2(idx, i, rhoA);
-          } else {
-            Lrho += p.D(i, j) * derij(idx, i, j, rhoA);
+      double Lrho = -rhoA[idx]*(1-4)*4; // from sum_i[D'_i rho * a(x)]
+      for (int i = 0; i < 4; ++i) {
+        Lrho -= p[i]*(1-4)*der1(idx, i);  // from D'_i rho * a(x)
+        for (int j = 0; j < 4; ++j) {
+          if (i == j) { // from D''_ii rho * D
+            Lrho += der2(idx, i, rhoA, p);
+          } else {  // from D''_ij rho * D
+            Lrho += derij(idx, i, j, rhoA, p);
           }
         }
       }
-      rhoB[idx] = rhs[idx] + alpha * Lrho;
+      rhoB[idx] = _rho[idx] + alpha * Lrho;   // ATTENZIONE: Claude aveva messo rhs[idx], io ho messo _rho[idx]
 
       double diff = std::abs(rhoB[idx] - rhoA[idx]);
       if (diff > maxDiff) maxDiff = diff;
