@@ -12,7 +12,7 @@ Grid4::Grid4(Interval w, Interval x, Interval y, Interval z, double T, double h)
 	: _nPoints{0},
 		_projection{nullptr},
 		_neighbour{nullptr},
-    _t{T/4},
+    _t{T/6},
 		_h{h},
 		_wPoints{(int)std::round((w.max - w.min) / h) + 1},
 		_xPoints{(int)std::round((x.max - x.min) / h) + 1},
@@ -149,7 +149,7 @@ Grid4::Grid4(Interval w, Interval x, Interval y, Interval z, double T, double h)
 
 Grid4::Grid4(std::string surfFile, std::string relFile, double T)
 	: _nPoints{0},
-    _t{T/4},
+    _t{T/6},
     _wPoints{0}, _xPoints{0}, _yPoints{0}, _zPoints{0},
     _wMin{0.}, _xMin{0.}, _yMin{0.}, _zMin{0.}
 {
