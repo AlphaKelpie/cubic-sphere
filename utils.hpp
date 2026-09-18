@@ -107,8 +107,8 @@ struct Quaternion
   }
 
   // ATTENZIONE const
-  double D(int i, int j) const {
-    return -this->operator[](i) * this->operator[](j);
+  double D(int i, int j, double delta_i=0., double delta_j=0.) const {
+    return -(this->operator[](i)+delta_i) * (this->operator[](j)+delta_j);
   }
 };
 

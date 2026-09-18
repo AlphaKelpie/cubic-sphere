@@ -683,8 +683,8 @@ double Grid4::der2(int pointIndex, int direction, Quaternion const& pos) const {
   return der2(pointIndex, direction, _rho, pos);
 }
 
-double Grid4::derij(int pointIndex, int dir1, int dir2) const {
-  return derij(pointIndex, dir1, dir2, _rho);
+double Grid4::derij(int pointIndex, int dir1, int dir2, Quaternion const& pos) const {
+  return derij(pointIndex, dir1, dir2, _rho, pos);
 }
 
 double Grid4::der1(int pointIndex, int direction, Function const& f) const {
@@ -749,36 +749,49 @@ double Grid4::der2(int pointIndex, int direction, Function const& f, Quaternion 
   return result / (_h * _h);
 }
 
-double Grid4::derij(int pointIndex, int dir1, int dir2, Function const& f) const {
+double Grid4::derij(int pointIndex, int dir1, int dir2, Function const& f, Quaternion const& pos) const {
   Neighbours near = _neighbour[pointIndex];
 
   double result = 0.;
+  int exp = (pos == Quaternion{-1., -1., -1., -1.}) ? 0 : 1;
 
   switch ((dir1 + 1) * (dir2 + 1))
   {
   case 2: //wx || xw
-    result = f[near.point[16]] - f[near.point[15]] -
-      f[near.point[10]] + f[near.point[9]];
+    result = f[near.point[16]]*std::pow(pos.D(0,1,_h,_h),exp) -
+      f[near.point[15]]*std::pow(pos.D(0,1,_h,-_h),exp) -
+      f[near.point[10]]*std::pow(pos.D(0,1,-_h,_h),exp) +
+      f[near.point[9]]*std::pow(pos.D(0,1,-_h,-_h),exp);
     break;
   case 3: //wy || yw
-    result = f[near.point[18]] - f[near.point[17]] -
-      f[near.point[12]] + f[near.point[11]];
+    result = f[near.point[18]]*std::pow(pos.D(0,2,_h,_h),exp) -
+      f[near.point[17]]*std::pow(pos.D(0,2,_h,-_h),exp) -
+      f[near.point[12]]*std::pow(pos.D(0,2,-_h,_h),exp) +
+      f[near.point[11]]*std::pow(pos.D(0,2,-_h,-_h),exp);
     break;
   case 4: //wz || zw
-    result = f[near.point[20]] - f[near.point[19]] -
-      f[near.point[14]] + f[near.point[13]];
+    result = f[near.point[20]]*std::pow(pos.D(0,3,_h,_h),exp) -
+      f[near.point[19]]*std::pow(pos.D(0,3,_h,-_h),exp) -
+      f[near.point[14]]*std::pow(pos.D(0,3,-_h,_h),exp) +
+      f[near.point[13]]*std::pow(pos.D(0,3,-_h,-_h),exp);
     break;
   case 6: //xy || yx
-    result = f[near.point[26]] - f[near.point[25]] -
-      f[near.point[22]] + f[near.point[21]];
+    result = f[near.point[26]]*std::pow(pos.D(1,2,_h,_h),exp) -
+      f[near.point[25]]*std::pow(pos.D(1,2,_h,-_h),exp) -
+      f[near.point[22]]*std::pow(pos.D(1,2,-_h,_h),exp) +
+      f[near.point[21]]*std::pow(pos.D(1,2,-_h,-_h),exp);
     break;
   case 8: //xz || zx
-    result = f[near.point[28]] - f[near.point[27]] -
-      f[near.point[24]] + f[near.point[23]];
+    result = f[near.point[28]]*std::pow(pos.D(1,3,_h,_h),exp) -
+      f[near.point[27]]*std::pow(pos.D(1,3,_h,-_h),exp) -
+      f[near.point[24]]*std::pow(pos.D(1,3,-_h,_h),exp) +
+      f[near.point[23]]*std::pow(pos.D(1,3,-_h,-_h),exp);
     break;
   case 12: //yz || zy
-    result = f[near.point[32]] - f[near.point[31]] -
-      f[near.point[30]] + f[near.point[29]];
+    result = f[near.point[32]]*std::pow(pos.D(2,3,_h,_h),exp) -
+      f[near.point[31]]*std::pow(pos.D(2,3,_h,-_h),exp) -
+      f[near.point[30]]*std::pow(pos.D(2,3,-_h,_h),exp) +
+      f[near.point[29]]*std::pow(pos.D(2,3,-_h,-_h),exp);
     break;
   default:
     throw std::invalid_argument(
