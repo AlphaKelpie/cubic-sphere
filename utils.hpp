@@ -102,8 +102,8 @@ struct Quaternion
   }
 
   // ATTENZIONE const
-  double D(int i) const {
-    return w*w + x*x + y*y + z*z - this->operator[](i)*this->operator[](i);
+  double D(int i, double delta_i = 0.) const {
+    return w*w + x*x + y*y + z*z - (this->operator[](i)+delta_i)*(this->operator[](i)+delta_i);
   }
 
   // ATTENZIONE const

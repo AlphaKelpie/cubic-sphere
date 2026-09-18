@@ -679,8 +679,8 @@ double Grid4::der1(int pointIndex, int direction) const {
   return der1(pointIndex, direction, _rho);
 }
 
-double Grid4::der2(int pointIndex, int direction) const {
-  return der2(pointIndex, direction, _rho);
+double Grid4::der2(int pointIndex, int direction, Quaternion const& pos) const {
+  return der2(pointIndex, direction, _rho, pos);
 }
 
 double Grid4::derij(int pointIndex, int dir1, int dir2) const {
@@ -715,24 +715,30 @@ double Grid4::der1(int pointIndex, int direction, Function const& f) const {
   return result / (_h * 2);
 }
 
-double Grid4::der2(int pointIndex, int direction, Function const& f) const {
+double Grid4::der2(int pointIndex, int direction, Function const& f, Quaternion const& pos) const {
   Neighbours& near = _neighbour[pointIndex];
 
   double result = 0.;
+  int const exp = (pos == Quaternion{-1., -1., -1., -1.}) ? 0 : 1;
+  double const hhalf = _h / 2;
 
   switch (direction + 1)
-  {
+  { // ATTENZIONE: qui D è posizionato a mezzo step (come Numerical Recepies), non _h intero come derij()
   case 1: //ww
-    result = f[near.point[2]] + f[near.point[1]];
+    result = std::pow(pos.D(0,hhalf),exp)*(f[near.point[2]] - f[near.point[0]]) +
+      std::pow(pos.D(0,-hhalf),exp)*(f[near.point[1]] - f[near.point[0]]);
     break;
   case 2: //xx
-    result = f[near.point[4]] + f[near.point[3]];
+    result = std::pow(pos.D(1,hhalf),exp)*(f[near.point[4]] - f[near.point[0]]) +
+      std::pow(pos.D(1,-hhalf),exp)*(f[near.point[3]] - f[near.point[0]]);
     break;
   case 3: //yy
-    result = f[near.point[6]] + f[near.point[5]];
+    result = std::pow(pos.D(2,hhalf),exp)*(f[near.point[6]] - f[near.point[0]]) +
+      std::pow(pos.D(2,-hhalf),exp)*(f[near.point[5]] - f[near.point[0]]);
     break;
   case 4: //zz
-    result = f[near.point[8]] + f[near.point[7]];
+    result = std::pow(pos.D(3,hhalf),exp)*(f[near.point[8]] - f[near.point[0]]) +
+      std::pow(pos.D(3,-hhalf),exp)*(f[near.point[7]] - f[near.point[0]]);
     break;
   default:
     throw std::invalid_argument(
@@ -740,7 +746,6 @@ double Grid4::der2(int pointIndex, int direction, Function const& f) const {
     break;
   }
 
-  result -= (f[near.point[0]] * 2);
   return result / (_h * _h);
 }
 

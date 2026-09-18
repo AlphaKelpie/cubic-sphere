@@ -90,14 +90,14 @@ class Grid4 {
   double der1(int pointIndex, int direction) const;
 
   //second derivative along the same direction
-  double der2(int pointIndex, int direction) const;
+  double der2(int pointIndex, int direction, Quaternion const& pos = {-1., -1., -1., -1.}) const;
 
   //second mix derivative along two different directions
   double derij(int pointIndex, int dir1, int dir2) const;
 
   // overloads operating on an arbitrary Function (used by evolveCN)
   double der1(int pointIndex, int direction, Function const& f) const;
-  double der2(int pointIndex, int direction, Function const& f) const;
+  double der2(int pointIndex, int direction, Function const& f, Quaternion const& pos = {-1., -1., -1., -1.}) const;
   double derij(int pointIndex, int dir1, int dir2, Function const& f) const;
 };
 
