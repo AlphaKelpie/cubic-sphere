@@ -723,25 +723,24 @@ double Grid4::der2(int pointIndex, int direction, Function const& f, Quaternion 
 
   double result = 0.;
   int const exp = (pos == Quaternion{-1., -1., -1., -1.}) ? 0 : 1;
-  double const hhalf = _h / 2;
 
   switch (direction + 1)
   { // ATTENZIONE: qui D è posizionato a mezzo step (come Numerical Recepies), non _h intero come derij()
   case 1: //ww
-    result = std::pow(pos.D(0,hhalf),exp)*(f[near.point[2]] - f[near.point[0]]) +
-      std::pow(pos.D(0,-hhalf),exp)*(f[near.point[1]] - f[near.point[0]]);
+    result = std::pow(pos.D(0),exp)*(f[near.point[2]] - f[near.point[0]]) +
+      std::pow(pos.D(0),exp)*(f[near.point[1]] - f[near.point[0]]);
     break;
   case 2: //xx
-    result = std::pow(pos.D(1,hhalf),exp)*(f[near.point[4]] - f[near.point[0]]) +
-      std::pow(pos.D(1,-hhalf),exp)*(f[near.point[3]] - f[near.point[0]]);
+    result = std::pow(pos.D(1),exp)*(f[near.point[4]] - f[near.point[0]]) +
+      std::pow(pos.D(1),exp)*(f[near.point[3]] - f[near.point[0]]);
     break;
   case 3: //yy
-    result = std::pow(pos.D(2,hhalf),exp)*(f[near.point[6]] - f[near.point[0]]) +
-      std::pow(pos.D(2,-hhalf),exp)*(f[near.point[5]] - f[near.point[0]]);
+    result = std::pow(pos.D(2),exp)*(f[near.point[6]] - f[near.point[0]]) +
+      std::pow(pos.D(2),exp)*(f[near.point[5]] - f[near.point[0]]);
     break;
   case 4: //zz
-    result = std::pow(pos.D(3,hhalf),exp)*(f[near.point[8]] - f[near.point[0]]) +
-      std::pow(pos.D(3,-hhalf),exp)*(f[near.point[7]] - f[near.point[0]]);
+    result = std::pow(pos.D(3),exp)*(f[near.point[8]] - f[near.point[0]]) +
+      std::pow(pos.D(3),exp)*(f[near.point[7]] - f[near.point[0]]);
     break;
   default:
     throw std::invalid_argument(
