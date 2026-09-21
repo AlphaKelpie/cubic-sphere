@@ -162,7 +162,7 @@ Grid4::Grid4(std::string surfFile, std::string relFile, double T)
   if (!loadNeighbour(relFile)) {
 		throw std::runtime_error{"loadNeighbour() cannot open file."};
 	}
-  if (!loadRho(relFile+"init_")) {
+  if (!loadRho(relFile+"_init")) {
     std::cerr << "Warning: unable to load initial rho. Recreating";
   	createRho();
   }
@@ -198,7 +198,7 @@ void Grid4::saveProjection(std::string filename) {
 	// points around
 
 	std::cout << "Saving projection... " << std::flush;
-	std::fstream fout(filename + "p.dat", std::ios::out);
+	std::fstream fout(filename + "_p.dat", std::ios::out);
 
 	fout << _nPoints << "\n\n";
 
@@ -220,7 +220,7 @@ void Grid4::saveNeighbour(std::string filename) {
 	// 1 row per point to _neighbour indexes (33 int)
 
 	std::cout << "Saving neighbour... " << std::flush;
-	std::fstream fout(filename + "n.dat", std::ios::out);
+	std::fstream fout(filename + "_n.dat", std::ios::out);
 
 	fout << _nPoints << "\n\n";
 
@@ -246,7 +246,7 @@ void Grid4::saveSurface(std::string filename) {
     return;
   }
 
-  std::fstream fout(filename + "s.dat", std::ios::out);
+  std::fstream fout(filename + "_s.dat", std::ios::out);
 
   fout << _nPoints << ' ' << _h << "\n\n";
 
@@ -263,7 +263,7 @@ void Grid4::saveRho(std::string filename) {
 
   std::cout << "Saving rho... " << std::flush;
 
-  std::fstream fout(filename + "r.dat", std::ios::out);
+  std::fstream fout(filename + "_r.dat", std::ios::out);
 
   fout << _nPoints << "\n\n";
 
@@ -567,7 +567,7 @@ Quaternion Grid4::closest(Quaternion const& p) {
 
 bool Grid4::loadSurface(std::string filename) {
   std::cout << "Loading surface... " << std::flush;
-  std::fstream fin(filename + "s.dat", std::ios::in);
+  std::fstream fin(filename + "_s.dat", std::ios::in);
   if (!fin.is_open()) {
     std::cerr << "Error: surface file '"<< filename
               << "' couldn't be opened.\n";
@@ -595,7 +595,7 @@ bool Grid4::loadSurface(std::string filename) {
 
 bool Grid4::loadProjection(std::string filename) {
   std::cout << "Loading projection... " << std::flush;
-  std::fstream fin(filename + "p.dat", std::ios::in);
+  std::fstream fin(filename + "_p.dat", std::ios::in);
   if (!fin.is_open()) {
     std::cerr << "Error: projection file '"<< filename
               << "' couldn't be opened.\n";
@@ -624,7 +624,7 @@ bool Grid4::loadProjection(std::string filename) {
 
 bool Grid4::loadNeighbour(std::string filename) {
   std::cout << "Loading neighbour... " << std::flush;
-  std::fstream fin(filename + "n.dat", std::ios::in);
+  std::fstream fin(filename + "_n.dat", std::ios::in);
   if (!fin.is_open()) {
     std::cerr << "Error: neighbour file '"<< filename
               << "' couldn't be opened.\n";
@@ -652,7 +652,7 @@ bool Grid4::loadNeighbour(std::string filename) {
 
 bool Grid4::loadRho(std::string filename) {
   std::cout << "Loading rho... " << std::flush;
-  std::fstream fin(filename + "r.dat", std::ios::in);
+  std::fstream fin(filename + "_r.dat", std::ios::in);
   if (!fin.is_open()) {
     std::cerr << "Error: rho file '"<< filename << "' couldn't be opened.\n";
     return false;

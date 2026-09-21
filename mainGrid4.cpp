@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
       std::cout << "Saving\n";
       g.saveProjection(path);
       g.saveNeighbour(path);
-      g.saveRho(path + "init_");
+      g.saveRho(path + "_init");
       g.saveSurface(path);
     }
 
