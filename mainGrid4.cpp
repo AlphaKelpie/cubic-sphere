@@ -1,9 +1,29 @@
 #include "params.hpp"
 #include "grid4.h"
 
+#include <filesystem>
 #include <format>
 #include <iostream>
 #include <string>
+
+void evolving(Grid4& g, std::string const& path) {
+  std::cout << "\nEvolving\n";
+  for (int step = Params::get().step; step < Params::get().total;
+      step+=Params::get().step) {
+    std::cout << "Step " << step << ": " << std::flush;
+    for (int sim = 0; sim < Params::get().step; ++sim) {
+      g.evolveCN();
+      // break;
+    }
+    g.saveRho(path + "_evolving_" + std::format("{:04}", step));
+    // break;
+  }
+
+  g.project();
+  g.saveRho(path + "_evolved");
+
+  std::cout << "End\n";
+}
 
 int main(int argc, char* argv[]) {
   if (argc == 2) {
@@ -15,7 +35,7 @@ int main(int argc, char* argv[]) {
   try
   {
     std::string const path = Params::get().path;
-    {
+    if (!std::filesystem::exists(std::filesystem::path{Params::get().pathdata + "_s.dat"})) {
       std::cout << "Creating\n";
       Grid4 g(
         Params::get().w,
@@ -32,31 +52,22 @@ int main(int argc, char* argv[]) {
       g.saveNeighbour(path);
       g.saveRho(path + "_init");
       g.saveSurface(path);
+
+      evolving(g, path);
+    }
+    
+    else {
+      std::string const pathdata = Params::get().pathdata;
+      std::cout << "Loading " << pathdata << '\n';
+      Grid4 g(pathdata, pathdata, Params::get().T);
+      g.saveRho(path + "_init");
+
+      evolving(g, path);
     }
 
-    {
-      std::cout << "Loading\n";
-      Grid4 g(path, path, Params::get().T);
-
-      std::cout << "Evolving\n";
-      for (int step = Params::get().step; step < Params::get().total;
-          step+=Params::get().step) {
-        std::cout << "Step " << step << ": " << std::flush;
-        for (int sim = 0; sim < Params::get().step; ++sim) {
-          g.evolveCN();
-          // break;
-        }
-        g.saveRho(path + "evolving_" + std::format("{:04}", step) + '_');
-        // break;
-      }
-
-      g.project();
-      g.saveRho(path + "evolved_");
-    }
-
-    std::cout << "End\n";
     return 0;
   }
+
   catch(const std::exception& e)
   {
     std::cerr << e.what() << '\n';

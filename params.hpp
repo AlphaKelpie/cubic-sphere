@@ -10,6 +10,7 @@ class Params {
   public:
   // Parameters
   std::string path;
+  std::string pathdata;
   double T;
   double h;
   Interval w;
@@ -58,6 +59,7 @@ class Params {
     double cz = 2.;
     while (fin >> key >> value) {
       if (key == "path") path = value;
+      else if (key == "pathdata") pathdata = value;
       else if (key == "T") T = std::stof(value);
       else if (key == "h") h = std::stof(value);
       else if (key == "w_min") w_min = std::stof(value);
