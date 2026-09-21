@@ -341,7 +341,7 @@ void Grid4::evolveCN(double dt, int maxIter, double tol) {
       Quaternion const& p = _volume[idx];
       double Lrho = -rhoA[idx]*(1-4)*4; // from sum_i[D'_i rho * a(x)]
       for (int i = 0; i < 4; ++i) {
-        Lrho -= p[i]*(1-4)*der1(idx, i);  // from D'_i rho * a(x)
+        Lrho -= p[i]*(1-4)*der1(idx, i, rhoA);  // from D'_i rho * a(x)
         for (int j = 0; j < 4; ++j) {
           if (i == j) { // from D''_ii rho * D
             Lrho += der2(idx, i, rhoA, p);
