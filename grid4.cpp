@@ -280,19 +280,20 @@ void Grid4::evolve(double dt) {
     dt = 0.1 * _h * _h * _h * _h;
   }
 
-  Function nextRho = Function(_nPoints);
+  Function nextRho(_nPoints);
 
   double deltaRho = 0.;
   for (int idx = 0; idx < _nPoints; ++idx) {
     Quaternion const& p = _volume[idx];
 
-    for (int j = 0; j < 4; ++j) {
-      deltaRho += p[j] * (1 - 4) * der1(idx, j);
-      for (int i = 0; i < 4; ++i) {
+    deltaRho -= _rho[idx] * (1 - 4)*4;
+    for (int i = 0; i < 4; ++i) {
+      deltaRho -= p[i]*(1-4)*der1(idx, i);
+      for (int j = 0; j < 4; ++j) {
         if (i == j) {
-          deltaRho += p.D(i) * der2(idx, i);
+          deltaRho += der2(idx, i, p);
         } else {
-          deltaRho += p.D(i, j) * derij(idx, i, j);
+          deltaRho += derij(idx, i, j, p);
         }
       }
     }
@@ -302,7 +303,7 @@ void Grid4::evolve(double dt) {
     deltaRho = 0.;
   }
 
-  _rho = nextRho;
+  _rho = std::move(nextRho);
 }
 
 void Grid4::evolveCN(double dt, int maxIter, double tol) {
