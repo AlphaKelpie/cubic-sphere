@@ -319,7 +319,7 @@ void Grid4::evolveCN(double dt, int maxIter, double tol) {
     dt = 0.1 * _h * _h * _h * _h;
   }
 
-  double alpha = _t * dt;
+  double alpha = _t * dt * .5;
 
   // Explicit half-step: rhs = rho^n + alpha * L(rho^n)
   Function rhs(_nPoints);
@@ -358,7 +358,7 @@ void Grid4::evolveCN(double dt, int maxIter, double tol) {
           }
         }
       }
-      rhoB[idx] = _rho[idx] + alpha * Lrho;
+      rhoB[idx] = rhs[idx] + alpha * Lrho;
 
       _diff[idx] = std::abs(rhoB[idx] - rhoA[idx]);
     });
@@ -371,12 +371,10 @@ void Grid4::evolveCN(double dt, int maxIter, double tol) {
     if (*maxIt < tol) {
       break;
     }
-    _diff = std::move(std::vector<float>(_nPoints, 0.));
+    std::fill(_diff.begin(), _diff.end(), 0.);
   }
 
-  std::for_each(std::execution::par_unseq, _indices.begin(), _indices.end(), [&](int idx) {
-    _rho[idx] = (rhoA[idx] + rhs[idx]) * .5;
-  });
+  _rho = std::move(rhoA);
 }
 
 void Grid4::evolveCNDiff(double dt, int maxIter, double tol) {
