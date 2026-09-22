@@ -1,6 +1,7 @@
 #include "params.hpp"
 #include "grid4.h"
 
+#include <chrono>
 #include <filesystem>
 #include <format>
 #include <iostream>
@@ -11,12 +12,14 @@ void evolving(Grid4& g, std::string const& path) {
   for (int step = Params::get().step; step < Params::get().total;
       step+=Params::get().step) {
     std::cout << "Step " << step << ": " << std::flush;
+    auto t0 = std::chrono::high_resolution_clock::now();
     for (int sim = 0; sim < Params::get().step; ++sim) {
       g.evolveCN();
-      // break;
     }
+    auto t1 = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<float, std::milli> dur = t1 - t0;
+    std::cout << dur.count() << "ms\t" << std::flush;
     g.saveRho(path + "_evolving_" + std::format("{:04}", step));
-    // break;
   }
 
   g.project();

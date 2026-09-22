@@ -3,8 +3,10 @@
 
 #include <algorithm>
 #include <cmath>
+#include <execution>
 #include <fstream>
 #include <iostream>
+#include <numeric>
 #include <random>
 #include <utility>
 
@@ -145,6 +147,10 @@ Grid4::Grid4(Interval w, Interval x, Interval y, Interval z, double T, double h)
 
 	createProjection();
 	createRho();
+
+  _indices = std::vector<int>(_nPoints);
+  std::iota(_indices.begin(), _indices.end(), 0);
+  _diff = std::vector<float>(_nPoints, 0);
 }
 
 Grid4::Grid4(std::string surfFile, std::string relFile, double T)
@@ -166,6 +172,10 @@ Grid4::Grid4(std::string surfFile, std::string relFile, double T)
     std::cerr << "Warning: unable to load initial rho. Recreating";
   	createRho();
   }
+
+  _indices = std::vector<int>(_nPoints);
+  std::iota(_indices.begin(), _indices.end(), 0);
+  _diff = std::vector<float>(_nPoints, 0);
 }
 
 Grid4::~Grid4() {
@@ -282,11 +292,10 @@ void Grid4::evolve(double dt) {
 
   Function nextRho(_nPoints);
 
-  double deltaRho = 0.;
-  for (int idx = 0; idx < _nPoints; ++idx) {
+  std::for_each(std::execution::par_unseq, _indices.begin(), _indices.end(), [&](int idx) {
     Quaternion const& p = _volume[idx];
 
-    deltaRho -= _rho[idx] * (1 - 4)*4;
+    double deltaRho = _rho[idx] * (1 - 4)*4;
     for (int i = 0; i < 4; ++i) {
       deltaRho -= p[i]*(1-4)*der1(idx, i);
       for (int j = 0; j < 4; ++j) {
@@ -300,8 +309,7 @@ void Grid4::evolve(double dt) {
 
     deltaRho *= _t * dt;
     nextRho[idx] = _rho[idx] + deltaRho;
-    deltaRho = 0.;
-  }
+  });
 
   _rho = std::move(nextRho);
 }
@@ -315,7 +323,7 @@ void Grid4::evolveCN(double dt, int maxIter, double tol) {
 
   // Explicit half-step: rhs = rho^n + alpha * L(rho^n)
   Function rhs(_nPoints);
-  for (int idx = 0; idx < _nPoints; ++idx) {
+  std::for_each(std::execution::par_unseq, _indices.begin(), _indices.end(), [&](int idx) {
     Quaternion const& p = _volume[idx];
     double Lrho = -_rho[idx]*(1-4)*4; // from sum_i[D'_i rho * a(x)]
     for (int i = 0; i < 4; ++i) {
@@ -329,16 +337,15 @@ void Grid4::evolveCN(double dt, int maxIter, double tol) {
       }
     }
     rhs[idx] = _rho[idx] + alpha * Lrho;
-  }
+  });
 
   // Solve [I - alpha*L] rho^{n+1} = rhs via fixed-point iteration
   Function rhoA = _rho;
   Function rhoB(_nPoints);
 
   for (int iter = 0; iter < maxIter; ++iter) {
-    double maxDiff = 0.;
 
-    for (int idx = 0; idx < _nPoints; ++idx) {
+    std::for_each(std::execution::par_unseq, _indices.begin(), _indices.end(), [&](int idx) {
       Quaternion const& p = _volume[idx];
       double Lrho = -rhoA[idx]*(1-4)*4; // from sum_i[D'_i rho * a(x)]
       for (int i = 0; i < 4; ++i) {
@@ -353,15 +360,18 @@ void Grid4::evolveCN(double dt, int maxIter, double tol) {
       }
       rhoB[idx] = rhs[idx] + alpha * Lrho;
 
-      double diff = std::abs(rhoB[idx] - rhoA[idx]);
-      if (diff > maxDiff) maxDiff = diff;
-    }
+      _diff[idx] = std::abs(rhoB[idx] - rhoA[idx]);
+    });
+
+    std::vector<float>::iterator maxIt = std::max_element(
+      std::execution::par_unseq, _diff.begin(), _diff.end());
 
     std::swap(rhoA, rhoB);
 
-    if (maxDiff < tol) {
+    if (*maxIt < tol) {
       break;
     }
+    std::fill(_diff.begin(), _diff.end(), 0.);
   }
 
   _rho = std::move(rhoA);

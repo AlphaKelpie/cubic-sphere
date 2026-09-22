@@ -1,6 +1,7 @@
 #ifndef GRID4_H
 #define GRID4_H
 
+#include <vector>
 #include "surface.h"
 #include "function.h"
 
@@ -40,6 +41,9 @@ class Grid4 {
   double _xMin;
   double _yMin;
   double _zMin;
+
+  std::vector<int> _indices;
+  std::vector<float> _diff;
 
   public:
   Grid4(Interval w = {0,10},
