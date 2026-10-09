@@ -14,7 +14,7 @@ void evolving(Grid4& g, std::string const& path) {
     std::cout << "Step " << step << ": " << std::flush;
     auto t0 = std::chrono::high_resolution_clock::now();
     for (int sim = 0; sim < Params::get().step; ++sim) {
-      g.evolveCN();
+      g.evolveCN(1e-5);
     }
     auto t1 = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float, std::milli> dur = t1 - t0;
