@@ -733,7 +733,7 @@ double Grid4::der2(int pointIndex, int direction, Function const& f, Quaternion 
   int const exp = (pos == Quaternion{-1., -1., -1., -1.}) ? 0 : 1;
 
   switch (direction + 1)
-  { // ATTENZIONE: qui D è posizionato a mezzo step (come Numerical Recepies), non _h intero come derij()
+  { // no problem about D+/-(1/2) because D constant over direction
   case 1: //ww
     result = std::pow(pos.D(0),exp)*(f[near.point[2]] - f[near.point[0]]) +
       std::pow(pos.D(0),exp)*(f[near.point[1]] - f[near.point[0]]);

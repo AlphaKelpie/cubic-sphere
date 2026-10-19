@@ -32,7 +32,7 @@ def diff(rhos, radii, unradii, filename):
 
     fig, axs = plt.subplots(1,3, figsize=(12,6))
     axs[0].bar(unradii, val, width=.02)
-    axs[0].set_yscale('log')
+    # axs[0].set_yscale('log')
     axs[0].set_ylabel("rho")
     axs[0].set_xlabel("radius")
     axs[0].set_title("Rho distribution")
