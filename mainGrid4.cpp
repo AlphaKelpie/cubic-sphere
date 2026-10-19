@@ -12,13 +12,13 @@ void evolving(Grid4& g, std::string const& path) {
   for (int step = Params::get().step; step < Params::get().total;
       step+=Params::get().step) {
     std::cout << "Step " << step << ": " << std::flush;
-    auto t0 = std::chrono::high_resolution_clock::now();
+    auto t0 = std::chrono::steady_clock::now();
     for (int sim = 0; sim < Params::get().step; ++sim) {
       g.evolveCN(1e-5);
     }
-    auto t1 = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<float, std::milli> dur = t1 - t0;
-    std::cout << dur.count() << "ms\t" << std::flush;
+    auto t1 = std::chrono::steady_clock::now();
+    auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0);
+    std::cout << dur << '\t' << std::flush;
     g.saveRho(path + "_evolving_" + std::format("{:04}", step));
   }
 
@@ -30,8 +30,10 @@ void evolving(Grid4& g, std::string const& path) {
 
 int main(int argc, char* argv[]) {
   if (argc == 2) {
+    std::cout << "Params from " << argv[1] << std::endl;
     Params::load(argv[1]);
   } else {
+    std::cout << "Params from params.dat\n";
     Params::load("params.dat");
   }
 

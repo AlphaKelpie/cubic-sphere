@@ -14,6 +14,8 @@ class Grid4 {
 
   // num of points
   int _nPoints;
+  // center point
+  int _centerPoint;
 
   // points in the volume
   Surface<Quaternion> _volume;
@@ -42,6 +44,7 @@ class Grid4 {
   double _yMin;
   double _zMin;
 
+  // Used in std::for_each
   std::vector<int> _indices;
   std::vector<float> _diff;
 

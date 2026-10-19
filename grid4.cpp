@@ -26,6 +26,7 @@ Grid4::Grid4(Interval w, Interval x, Interval y, Interval z, double T, double h)
 		_zMin{z.min}
 {
 	_nPoints = _wPoints * _xPoints * _yPoints * _zPoints;
+  _centerPoint = (_nPoints - 1) / 2;
 
 	// Create surface and _neighbour
 	Quaternion* temp = new Quaternion[_nPoints];
@@ -173,6 +174,11 @@ Grid4::Grid4(std::string surfFile, std::string relFile, double T)
   	createRho();
   }
 
+  // set rho value in the center of the hypercube as zero
+  _centerPoint = (_nPoints - 1) / 2;
+  _rho[_centerPoint] = 0.;
+
+  // initialise std::for_each elements
   _indices = std::vector<int>(_nPoints);
   std::iota(_indices.begin(), _indices.end(), 0);
   _diff = std::vector<float>(_nPoints, 0);
@@ -189,10 +195,10 @@ void Grid4::fillFirstRho() {
   std::mt19937 gen(seed());
   std::uniform_int_distribution<int> init(0, _nPoints);
   int start_point = init(gen);
+  if (start_point == _centerPoint) start_point += 10;
 
   std::pair<int[16], double[16]>& cubic = _projection[start_point];
   for (int j = 0; j < 16; ++j) {
-    if (cubic.first[j] >= 0)
     _rho[cubic.first[j]] = 1. * cubic.second[j];
   }
 }
@@ -312,6 +318,7 @@ void Grid4::evolve(double dt) {
   });
 
   _rho = std::move(nextRho);
+  _rho[_centerPoint] = 0.;
 }
 
 void Grid4::evolveCN(double dt, int maxIter, double tol) {
@@ -338,6 +345,7 @@ void Grid4::evolveCN(double dt, int maxIter, double tol) {
     }
     rhs[idx] = _rho[idx] + alpha * Lrho;
   });
+  rhs[_centerPoint] = 0.;
 
   // Solve [I - alpha*L] rho^{n+1} = rhs via fixed-point iteration
   Function rhoA = _rho;
@@ -374,6 +382,7 @@ void Grid4::evolveCN(double dt, int maxIter, double tol) {
     std::fill(_diff.begin(), _diff.end(), 0.);
   }
 
+  rhoA[_centerPoint] = 0.;
   _rho = std::move(rhoA);
 }
 
