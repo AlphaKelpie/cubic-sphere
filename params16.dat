@@ -1,7 +1,7 @@
-path data/radial16
+path data/radial6_16
 pathdata data/base16
 T 6.
-h 0.08
+h 0.16
 w_min 0.
 w_max 4.
 x_min 0.
@@ -15,5 +15,5 @@ cw 2.
 cx 2.
 cy 2.
 cz 2.
-total 100000
+total 10000
 step 100
