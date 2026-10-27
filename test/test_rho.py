@@ -1,21 +1,26 @@
-import numpy as np # pyright: ignore[reportMissingImports]
+import numpy as np
 from pathlib import Path
-from sys import argv
 import matplotlib.pyplot as plt
 
 def ctor():
-    vol = np.loadtxt(VOLUMEFILE, skiprows=2)
+    vol = np.loadtxt(volumefile, skiprows=2)
     vol -= CENTER
     radii = np.linalg.norm(vol, axis=1)
-    uniqr = np.sort(np.unique(radii))
-    return radii, uniqr
+    uniqr, uniqc = np.unique(radii, return_counts=True)
+    return radii, uniqr, uniqc
 
-def diff(rhos, radii, unradii, filename):
+def gauss(x, *p):
+    A, mu, sigma = p
+    return A*np.exp(-(x-mu)**2/(2.*sigma**2))
+
+def diff(rhos, filename):
     searchsorted = np.searchsorted(unradii, radii)
-    # if (filename.stem[-4] == '0' or 'init' in filename.stem):
-    #     with open(filename.with_suffix('.txt'), 'w') as f:
     val = np.bincount(searchsorted, rhos)
+    stop = np.argwhere(unradii > 3.5)[0][0]
+    m = np.average(unradii, weights=val)
+    v = np.average((unradii - m)**2, weights=val)
 
+    # for plots
     stds = []
     ratios = []
     count = 0
@@ -31,12 +36,12 @@ def diff(rhos, radii, unradii, filename):
             count += 1
 
     fig, axs = plt.subplots(1,3, figsize=(12,6))
-    axs[0].bar(unradii, val, width=.02)
-    # axs[0].set_yscale('log')
+    axs[0].bar(unradii[:stop], val[:stop], width=.02)
     axs[0].set_ylabel("rho")
     axs[0].set_xlabel("radius")
     axs[0].set_title("Rho distribution")
-    axs[0].text(.95, .95, mrho, ha='right', va='top', transform=axs[0].transAxes)
+    axs[0].text(.95, .95, f"{mrho}\n{m}\n{v}", ha='right',
+                va='top', transform=axs[0].transAxes)
 
     axs[1].hist(stds, bins=30, log=True)
     axs[1].set_ylabel("occurences")
@@ -52,7 +57,9 @@ def diff(rhos, radii, unradii, filename):
     fig.savefig(filename.with_suffix('.png'))
     plt.close(fig)
 
-def test(filename, radii, unradii):
+    return m, v
+
+def test(filename):
     print("\n\nTesting ", filename)
     with open(filename) as f:
         nPoints = int(f.readline())
@@ -60,32 +67,92 @@ def test(filename, radii, unradii):
     np.where(rhos == np.nan, 0., None)
     print(nPoints, np.sum(rhos), np.min(rhos), np.max(rhos), np.count_nonzero(rhos > 1e-7))
 
-    diff(rhos, radii, unradii, filename)
+    return diff(rhos, filename)
 
 def main():
+    times = []
+    averages = []
+    variances = []
     init_file = path / (name+"_init_r.dat")
     evolving_files = np.sort(list(path.rglob(name+"_evolving_*_r.dat")))
     final_file = path / (name+"_evolved_r.dat")
 
-    radii, unradii = ctor()
+    times.append(0)
+    m, v = test(init_file)
+    averages.append(m)
+    variances.append(v)
 
-    test(init_file, radii, unradii)
-
-    for file in evolving_files:
-        test(file, radii, unradii)
+    for epoch in epochs:
+        for file in evolving_files:
+            if epoch in str(file):
+                times.append(int(str(file).split('_')[-2]))
+                m, v = test(file)
+                averages.append(m)
+                variances.append(v)
+                break
     
-    test(final_file, radii, unradii)
+    m, v = test(final_file)
+    times.append(times[-1] + 1000)
+    averages.append(m)
+    variances.append(v)
+    return times, averages, variances
 
 
 if __name__ == "__main__":
     path = Path("../data")
-    name = "test4_1"
-    if len(argv) >= 2:
-        name = argv[1]
-    if len(argv) >= 3:
-        volfile = argv[2]
-    print("Test Rho in ", path, " in the simulation ", name)
-    VOLUMEFILE = "../data/" + volfile + "_s.dat"
-    print(VOLUMEFILE)
+    epochs = list(range(100, 10000, 100)) + list(range(10000, 100001, 1000))
+    for i in range(len(epochs)):
+        epochs[i] = '_' + str(epochs[i]).zfill(4) + '_'
+    p = [1., 1., .2]
     CENTER = 2.
-    main()
+
+    name = "radial6_08"
+    volfile = "base08"
+    print("Test Rho in ", path, " in the simulation ", name)
+    volumefile = "../data/" + volfile + "_s.dat"
+    print(volumefile)
+    radii, unradii, unicount = ctor()
+    times08, averages08, variances08 = main()
+    with open("../data/radial6_08.dat", 'w') as f:
+        raws = list(f"{t},{a},{v}" for t, a, v in zip(times08, averages08, variances08))
+        f.write('\n'.join(r for r in raws))
+
+    name = "radial6_1"
+    volfile = "base1"
+    print("Test Rho in ", path, " in the simulation ", name)
+    volumefile = "../data/" + volfile + "_s.dat"
+    print(volumefile)
+    radii, unradii, unicount = ctor()
+    times1, averages1, variances1 = main()
+    with open("../data/radial6_1.dat", 'w') as f:
+        raws = list(f"{t},{a},{v}" for t, a, v in zip(times1, averages1, variances1))
+        f.write('\n'.join(r for r in raws))
+
+    name = "radial6_16"
+    volfile = "base16"
+    print("Test Rho in ", path, " in the simulation ", name)
+    volumefile = "../data/" + volfile + "_s.dat"
+    print(volumefile)
+    radii, unradii, unicount = ctor()
+    times16, averages16, variances16 = main()
+    with open("../data/radial6_16.dat", 'w') as f:
+        raws = list(f"{t},{a},{v}" for t, a, v in zip(times16, averages16, variances16))
+        f.write('\n'.join(r for r in raws))
+
+    # plot variances
+    LAST_ROW = -1
+    dat = np.loadtxt("../data/radial6_08.dat", delimiter=',')
+    times08 = dat[:LAST_ROW,0]
+    variances08 = dat[:LAST_ROW, 2]
+    dat = np.loadtxt("../data/radial6_1.dat", delimiter=',')
+    times1 = dat[:LAST_ROW,0]
+    variances1 = dat[:LAST_ROW, 2]
+    dat = np.loadtxt("../data/radial6_16.dat", delimiter=',')
+    times16 = dat[:LAST_ROW,0]
+    variances16 = dat[:LAST_ROW, 2]
+    fig, ax = plt.subplots(1,1)
+    ax.plot(times08, variances08, 'r', label="08")
+    ax.plot(times1, variances1, 'b.-', label="1")
+    ax.plot(times16, variances16, 'g--', label="16")
+    ax.legend()
+    fig.savefig("../data/variance6.pdf")
