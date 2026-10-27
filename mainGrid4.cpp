@@ -8,13 +8,14 @@
 #include <string>
 
 void evolving(Grid4& g, std::string const& path) {
-  std::cout << "\nEvolving\n";
+  const double deltaT = Params::get().deltaT;
+  std::cout << "\nEvolving with deltaT = " << deltaT << std::endl;
   for (int step = Params::get().step; step < Params::get().total;
       step+=Params::get().step) {
     std::cout << "Step " << step << ": " << std::flush;
     auto t0 = std::chrono::steady_clock::now();
     for (int sim = 0; sim < Params::get().step; ++sim) {
-      g.evolveCN(1e-5);
+      g.evolveCN(deltaT);
     }
     auto t1 = std::chrono::steady_clock::now();
     auto dur = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0);
