@@ -27,3 +27,7 @@ Con passo temporale 1e-5 devo effettuare 1e5 step per arrivare a un tempo 1; tem
 Dai dati, col passo temporale 1e-5 bisogna proiettare dopo 0.01.
 Con 1e-4 la convergenza di Crank-Nicolson è troppo lenta e fallisce a volte.
 Il problema è che servirebbe un passo spaziale più piccolo, ma in quattro dimensioni il numero di punti cresce velocemente e occorre lasciare spazio attorno alla sfera per evitare che la condizione assorbente al contorno agisca prima della proiezione.
+
+## Monte Carlo
+
+Vengono simulate n traiettorie estraendo casualmente asse e angolo di rotazione.
