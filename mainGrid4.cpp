@@ -9,7 +9,7 @@
 
 void evolving(Grid4& g, std::string const& path) {
   const double deltaT = Params::get().deltaT;
-  std::cout << "\nEvolving with deltaT = " << deltaT << std::endl;
+  std::cout << "\n\033[1;34mEvolving with deltaT = " << deltaT << "\033[0m\n";
   for (int step = Params::get().step; step < Params::get().total;
       step+=Params::get().step) {
     std::cout << "Step " << step << ": " << std::flush;
@@ -26,15 +26,15 @@ void evolving(Grid4& g, std::string const& path) {
   g.project();
   g.saveRho(path + "_evolved");
 
-  std::cout << "End\n";
+  std::cout << "\033[1;32mEnd\033[0m\n";
 }
 
 int main(int argc, char* argv[]) {
   if (argc == 2) {
-    std::cout << "Params from " << argv[1] << std::endl;
+    std::cout << "\033[1;36mParams from " << argv[1] << "\033[0m\n";
     Params::load(argv[1]);
   } else {
-    std::cout << "Params from params.dat\n";
+    std::cout << "\033[1;36mParams from params.dat\033[0m\n";
     Params::load("params.dat");
   }
 
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
   {
     std::string const path = Params::get().path;
     if (!std::filesystem::exists(std::filesystem::path{Params::get().pathdata + "_s.dat"})) {
-      std::cout << "Creating\n";
+      std::cout << "\033[33mCreating\033[0m\n";
       Grid4 g(
         Params::get().w,
         Params::get().x,
@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
       );
       g.fillFirstRho();
 
-      std::cout << "Saving\n";
+      std::cout << "\033[33mSaving\033[0m\n";
       g.saveProjection(path);
       g.saveNeighbour(path);
       g.saveRho(path + "_init");
@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
     
     else {
       std::string const pathdata = Params::get().pathdata;
-      std::cout << "Loading " << pathdata << '\n';
+      std::cout << "\033[35mLoading " << pathdata << "\033[0m\n";
       Grid4 g(pathdata, pathdata, Params::get().T);
       g.saveRho(path + "_init");
 
@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
 
   catch(const std::exception& e)
   {
-    std::cerr << e.what() << '\n';
+    std::cerr << "\033[31m" << e.what() << "\033[0m\n";
     return 1;
   }
 }
