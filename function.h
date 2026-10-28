@@ -1,5 +1,5 @@
 #ifndef FUNCTION_H
-#define FUNCION_H
+#define FUNCTION_H
 
 class Function {
   private:
