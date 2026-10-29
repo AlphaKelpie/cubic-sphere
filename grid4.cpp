@@ -67,8 +67,7 @@ Grid4::Grid4(Interval w, Interval x, Interval y, Interval z, double T, double h)
 	delete[] temp;
   std::cout << "\tDone!\t" << _nPoints << std::endl;
 
-  createNeighbour();
-	createProjection();
+  createMaps();
 	createRho();
 
   _indices = std::vector<int>(_nPoints);
@@ -388,52 +387,97 @@ void Grid4::createRho() {
   _rho = Function(_nPoints);
 }
 
-void Grid4::createNeighbour() {
-  std::cout << "Find neighbours...\n";
-  _neighbour = new Neighbours[_nPoints];
+void Grid4::createMaps() {
+  std::cout << "Find neighbours and projections...\n";
 
-  for (int i = 0; i < _nPoints; ++i) {
+  _neighbour = new Neighbours[_nPoints];
+  _projection = new std::pair<int[16], double[16]>[_nPoints];
+
+  for (int i = 0; i < _nPoints; ++i) {  //for each quaternion..
     std::cout << '\r' << i << '/' << _nPoints << std::flush;
 
+    //current quaternion
     Quaternion q = _volume[i];
-    Quaternion n[32];
-    n[0] = {q.w - _h, q.x     , q.y     , q.z     };
-    n[1] = {q.w + _h, q.x     , q.y     , q.z     };
-    n[2] = {q.w     , q.x - _h, q.y     , q.z     };
-    n[3] = {q.w     , q.x + _h, q.y     , q.z     };
-    n[4] = {q.w     , q.x     , q.y - _h, q.z     };
-    n[5] = {q.w     , q.x     , q.y + _h, q.z     };
-    n[6] = {q.w     , q.x     , q.y     , q.z - _h};
-    n[7] = {q.w     , q.x     , q.y     , q.z + _h};
-    n[8] = {q.w - _h, q.x - _h, q.y     , q.z     };
-    n[9] = {q.w - _h, q.x + _h, q.y     , q.z     };
-    n[10]= {q.w - _h, q.x     , q.y - _h, q.z     };
-    n[11]= {q.w - _h, q.x     , q.y + _h, q.z     };
-    n[12]= {q.w - _h, q.x     , q.y     , q.z - _h};
-    n[13]= {q.w - _h, q.x     , q.y     , q.z + _h};
-    n[14]= {q.w + _h, q.x - _h, q.y     , q.z     };
-    n[15]= {q.w + _h, q.x + _h, q.y     , q.z     };
-    n[16]= {q.w + _h, q.x     , q.y - _h, q.z     };
-    n[17]= {q.w + _h, q.x     , q.y + _h, q.z     };
-    n[18]= {q.w + _h, q.x     , q.y     , q.z - _h};
-    n[19]= {q.w + _h, q.x     , q.y     , q.z + _h};
-    n[20]= {q.w     , q.x - _h, q.y - _h, q.z     };
-    n[21]= {q.w     , q.x - _h, q.y + _h, q.z     };
-    n[22]= {q.w     , q.x - _h, q.y     , q.z - _h};
-    n[23]= {q.w     , q.x - _h, q.y     , q.z + _h};
-    n[24]= {q.w     , q.x + _h, q.y - _h, q.z     };
-    n[25]= {q.w     , q.x + _h, q.y + _h, q.z     };
-    n[26]= {q.w     , q.x + _h, q.y     , q.z - _h};
-    n[27]= {q.w     , q.x + _h, q.y     , q.z + _h};
-    n[28]= {q.w     , q.x     , q.y - _h, q.z - _h};
-    n[29]= {q.w     , q.x     , q.y - _h, q.z + _h};
-    n[30]= {q.w     , q.x     , q.y + _h, q.z - _h};
-    n[31]= {q.w     , q.x     , q.y + _h, q.z + _h};
 
+    //array of neighbours positions in the grid
+    Quaternion n[32];
+    n[0]  = {q.w - _h, q.x     , q.y     , q.z     };
+    n[1]  = {q.w + _h, q.x     , q.y     , q.z     };
+    n[2]  = {q.w     , q.x - _h, q.y     , q.z     };
+    n[3]  = {q.w     , q.x + _h, q.y     , q.z     };
+    n[4]  = {q.w     , q.x     , q.y - _h, q.z     };
+    n[5]  = {q.w     , q.x     , q.y + _h, q.z     };
+    n[6]  = {q.w     , q.x     , q.y     , q.z - _h};
+    n[7]  = {q.w     , q.x     , q.y     , q.z + _h};
+    n[8]  = {q.w - _h, q.x - _h, q.y     , q.z     };
+    n[9]  = {q.w - _h, q.x + _h, q.y     , q.z     };
+    n[10] = {q.w - _h, q.x     , q.y - _h, q.z     };
+    n[11] = {q.w - _h, q.x     , q.y + _h, q.z     };
+    n[12] = {q.w - _h, q.x     , q.y     , q.z - _h};
+    n[13] = {q.w - _h, q.x     , q.y     , q.z + _h};
+    n[14] = {q.w + _h, q.x - _h, q.y     , q.z     };
+    n[15] = {q.w + _h, q.x + _h, q.y     , q.z     };
+    n[16] = {q.w + _h, q.x     , q.y - _h, q.z     };
+    n[17] = {q.w + _h, q.x     , q.y + _h, q.z     };
+    n[18] = {q.w + _h, q.x     , q.y     , q.z - _h};
+    n[19] = {q.w + _h, q.x     , q.y     , q.z + _h};
+    n[20] = {q.w     , q.x - _h, q.y - _h, q.z     };
+    n[21] = {q.w     , q.x - _h, q.y + _h, q.z     };
+    n[22] = {q.w     , q.x - _h, q.y     , q.z - _h};
+    n[23] = {q.w     , q.x - _h, q.y     , q.z + _h};
+    n[24] = {q.w     , q.x + _h, q.y - _h, q.z     };
+    n[25] = {q.w     , q.x + _h, q.y + _h, q.z     };
+    n[26] = {q.w     , q.x + _h, q.y     , q.z - _h};
+    n[27] = {q.w     , q.x + _h, q.y     , q.z + _h};
+    n[28] = {q.w     , q.x     , q.y - _h, q.z - _h};
+    n[29] = {q.w     , q.x     , q.y - _h, q.z + _h};
+    n[30] = {q.w     , q.x     , q.y + _h, q.z - _h};
+    n[31] = {q.w     , q.x     , q.y + _h, q.z + _h};
+
+    //add current quat. index in _neighbour
     _neighbour[i].point[0] = i;
-    std::for_each(std::execution::par_unseq, _indices.begin(), _indices.end(), [&](int idx) {
+
+    //find the closest point on the hypersphere
+    Quaternion c = closest(q);
+
+    double w0 = std::floor((c.w - _wMin) / _h) * _h;
+    double x0 = std::floor((c.x - _xMin) / _h) * _h;
+    double y0 = std::floor((c.y - _yMin) / _h) * _h;
+    double z0 = std::floor((c.z - _zMin) / _h) * _h;
+    //neg-left-front-down vertex projection quaternion coordinates
+    Quaternion nlfd = {w0, x0, y0, z0};
+    //pos-right-behind-top vertex projection quaternion coordinates
+    Quaternion prbt = {w0 + _h, x0 + _h, y0 + _h, z0 + _h};
+
+    //weights
+    double wd = std::clamp((w0 - c.w) / _h, 0., 1.);
+    double xd = std::clamp((x0 - c.x) / _h, 0., 1.);
+    double yd = std::clamp((y0 - c.y) / _h, 0., 1.);
+    double zd = std::clamp((z0 - c.z) / _h, 0., 1.);
+    _projection[i].second[0]  = (1-wd) * (1-xd) * (1-yd) * (1-zd);
+    _projection[i].second[1]  = (1-wd) * (1-xd) * (1-yd) *    zd;
+    _projection[i].second[2]  = (1-wd) * (1-xd) *    yd  * (1-zd);
+    _projection[i].second[3]  = (1-wd) * (1-xd) *    yd  *    zd;
+    _projection[i].second[4]  = (1-wd) *    xd  * (1-yd) * (1-zd);
+    _projection[i].second[5]  = (1-wd) *    xd  * (1-yd) *    zd;
+    _projection[i].second[6]  = (1-wd) *    xd  *    yd  * (1-zd);
+    _projection[i].second[7]  = (1-wd) *    xd  *    yd  *    zd;
+    _projection[i].second[8]  =    wd  * (1-xd) * (1-yd) * (1-zd);
+    _projection[i].second[9]  =    wd  * (1-xd) * (1-yd) *    zd;
+    _projection[i].second[10] =    wd  * (1-xd) *    yd  * (1-zd);
+    _projection[i].second[11] =    wd  * (1-xd) *    yd  *    zd;
+    _projection[i].second[12] =    wd  *    xd  * (1-yd) * (1-zd);
+    _projection[i].second[13] =    wd  *    xd  * (1-yd) *    zd;
+    _projection[i].second[14] =    wd  *    xd  *    yd  * (1-zd);
+    _projection[i].second[15] =    wd  *    xd  *    yd  *    zd;
+
+    //search for neighbours and projection quaternion indexes on the nlfd
+    //and prbt vertices
+    std::for_each(std::execution::par_unseq, _indices.begin(), _indices.end(),
+                  [&](int idx) {
       Quaternion r = _volume[idx];
 
+      //neighbours
            if (r == n[0] ) _neighbour[i].point[1]  = idx;
       else if (r == n[1] ) _neighbour[i].point[2]  = idx;
       else if (r == n[2] ) _neighbour[i].point[3]  = idx;
@@ -466,8 +510,35 @@ void Grid4::createNeighbour() {
       else if (r == n[29]) _neighbour[i].point[30] = idx;
       else if (r == n[30]) _neighbour[i].point[31] = idx;
       else if (r == n[31]) _neighbour[i].point[32] = idx;
+
+      //nlfd and prbt projections
+           if (r == nlfd) _projection[i].first[0]  = idx;
+      else if (r == prbt) _projection[i].first[15] = idx;
     });
   }
+
+  //for each quaternion find the projections via nlfd and prbt vertices
+  std::for_each(std::execution::par_unseq, _indices.begin(), _indices.end(),
+                [&](int idx) {
+    Neighbours neigh_nlfd = _neighbour[_projection[idx].first[0]];
+    Neighbours neigh_prbt = _neighbour[_projection[idx].first[15]];
+
+    //the other 14 vertices of projection
+    _projection[idx].first[1]  = neigh_nlfd.point[8];
+    _projection[idx].first[2]  = neigh_nlfd.point[6];
+    _projection[idx].first[3]  = neigh_nlfd.point[32];
+    _projection[idx].first[4]  = neigh_nlfd.point[4];
+    _projection[idx].first[5]  = neigh_nlfd.point[28];
+    _projection[idx].first[6]  = neigh_nlfd.point[26];
+    _projection[idx].first[7]  = neigh_prbt.point[1];
+    _projection[idx].first[8]  = neigh_nlfd.point[2];
+    _projection[idx].first[9]  = neigh_nlfd.point[20];
+    _projection[idx].first[10] = neigh_nlfd.point[18];
+    _projection[idx].first[11] = neigh_prbt.point[3];
+    _projection[idx].first[12] = neigh_nlfd.point[16];
+    _projection[idx].first[13] = neigh_prbt.point[5];
+    _projection[idx].first[14] = neigh_prbt.point[7];
+  });
 }
 
 void Grid4::createProjection() {
@@ -518,22 +589,22 @@ void Grid4::createProjection() {
 
     // The 16 vertices of the 4D unit hypercube (w,x,y,z) in {0,1}^4,
     // ordered to match the weight layout used everywhere else in the code.
-    _projection[i].first[0]  = base;
-    _projection[i].first[1]  = base                          + strideZ;
-    _projection[i].first[2]  = base             + strideY;
-    _projection[i].first[3]  = base             + strideY    + strideZ;
-    _projection[i].first[4]  = base + strideX;
-    _projection[i].first[5]  = base + strideX                + strideZ;
-    _projection[i].first[6]  = base + strideX   + strideY;
-    _projection[i].first[7]  = base + strideX   + strideY    + strideZ;
+    _projection[i].first[0]  = base;            
+    _projection[i].first[1]  = base                               + strideZ;
+    _projection[i].first[2]  = base                     + strideY;
+    _projection[i].first[3]  = base                     + strideY + strideZ;
+    _projection[i].first[4]  = base           + strideX;
+    _projection[i].first[5]  = base           + strideX           + strideZ;
+    _projection[i].first[6]  = base           + strideX + strideY;
+    _projection[i].first[7]  = base           + strideX + strideY + strideZ;
     _projection[i].first[8]  = base + strideW;
-    _projection[i].first[9]  = base + strideW                + strideZ;
-    _projection[i].first[10] = base + strideW   + strideY;
-    _projection[i].first[11] = base + strideW   + strideY    + strideZ;
-    _projection[i].first[12] = base + strideW   + strideX;
-    _projection[i].first[13] = base + strideW   + strideX    + strideZ;
-    _projection[i].first[14] = base + strideW   + strideX    + strideY;
-    _projection[i].first[15] = base + strideW   + strideX    + strideY + strideZ;
+    _projection[i].first[9]  = base + strideW                     + strideZ;
+    _projection[i].first[10] = base + strideW           + strideY;
+    _projection[i].first[11] = base + strideW           + strideY + strideZ;
+    _projection[i].first[12] = base + strideW + strideX;
+    _projection[i].first[13] = base + strideW + strideX           + strideZ;
+    _projection[i].first[14] = base + strideW + strideX + strideY;
+    _projection[i].first[15] = base + strideW + strideX + strideY + strideZ;
 
     // Trilinear interpolation weights
     _projection[i].second[0]  = (1-wd) * (1-xd) * (1-yd) * (1-zd);

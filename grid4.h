@@ -84,7 +84,7 @@ class Grid4 {
   double phi(double w, double x, double y, double z);
 
   //find the neighbours of every point
-  void createNeighbour();
+  void createMaps();
 
   //create the first rho value
   void createRho();
