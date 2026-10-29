@@ -25,24 +25,14 @@ Grid4::Grid4(Interval w, Interval x, Interval y, Interval z, double T, double h)
 		_yMin{y.min},
 		_zMin{z.min}
 {
-	_nPoints = _wPoints * _xPoints * _yPoints * _zPoints;
-  _centerPoint = (_nPoints - 1) / 2;
+	int cubicnPoints = _wPoints * _xPoints * _yPoints * _zPoints;
 
-	// Create surface and _neighbour
-	Quaternion* temp = new Quaternion[_nPoints];
-
-	_neighbour = new Neighbours[_nPoints];
+	// Create surface
+	Quaternion* temp = new Quaternion[cubicnPoints];
 
   std::cout << "Construct volume and neighbour...\n";
 	//for every point of the descrete domain..
-  bool neg;
-  bool pos;
-	bool left;
-	bool right;
-	bool front;
-	bool behind;
-	bool down;
-	bool top;
+  int fullIndex = 0;
   int index = 0;
   double m;
   double i;
@@ -50,102 +40,34 @@ Grid4::Grid4(Interval w, Interval x, Interval y, Interval z, double T, double h)
   double k;
   for (short mi = 0; mi < _wPoints; ++mi) {
     m = w.min + _h * mi;
-    neg = (mi <= 0) ? false : true;
-    pos = (mi >= _wPoints - 1) ? false : true;
     for (short ii = 0; ii < _xPoints; ++ii) {
       i = x.min + _h * ii;
-      left = (ii <= 0) ? false : true;
-      right = (ii >= _xPoints - 1) ? false : true;
       for (short ji = 0; ji < _yPoints; ++ji) {
         j = y.min + _h * ji;
-        front = (ji <= 0) ? false : true;
-        behind = (ji >= _yPoints - 1) ? false : true;
         for (short ki = 0; ki < _zPoints; ++ki) {
           k = z.min + _h * ki;
-          down = (ki <= 0) ? false : true;
-          top = (ki >= _zPoints - 1) ? false : true;
-          std::cout << '\r' << index << '/' << _nPoints << std::flush;
-          //..add it to the volume and..
+          ++fullIndex;
+          std::cout << '\r' << fullIndex << '/' << cubicnPoints << std::flush;
+
+          if (std::abs(phi(m, i, j, k)) > 0.2) { continue; }
+
+          //..add it to the volume
           temp[index] = {m, i, j, k};
-          //..create corresponding neighbour
-          _neighbour[index].point[0] = index;   // itself
-          _neighbour[index].point[1] = (neg) ? (index - _xPoints * _yPoints * _zPoints) : -1;
-
-          _neighbour[index].point[2] = (pos) ? (index + _xPoints * _yPoints * _zPoints) : -1;
-
-          _neighbour[index].point[3] = (left) ? (index - _yPoints * _zPoints) : -1;
-
-          _neighbour[index].point[4] = (right) ? (index + _yPoints * _zPoints) : -1;
-
-          _neighbour[index].point[5] = (front) ? (index - _zPoints) : -1;
-
-          _neighbour[index].point[6] = (behind) ? (index + _zPoints) : -1;
-
-          _neighbour[index].point[7] = (down) ? (index - 1) : -1;
-
-          _neighbour[index].point[8] = (top) ? (index + 1) : -1;
-
-          _neighbour[index].point[9] = (neg && left) ? (index - (_xPoints + 1) * _yPoints * _zPoints) : -1;
-
-          _neighbour[index].point[10] = (neg && right) ? (index - (_xPoints - 1) * _yPoints * _zPoints) : -1;
-
-          _neighbour[index].point[11] = (neg && front) ? (index - (_xPoints * _yPoints + 1) * _zPoints) : -1;
-
-          _neighbour[index].point[12] = (neg && behind) ? (index - (_xPoints * _yPoints - 1) * _zPoints) : -1;
-
-          _neighbour[index].point[13] = (neg && down) ? (index - (_xPoints * _yPoints * _zPoints + 1)) : -1;
-
-          _neighbour[index].point[14] = (neg && top) ? (index - (_xPoints * _yPoints * _zPoints - 1)) : -1;
-
-          _neighbour[index].point[15] = (pos && left) ? (index + (_xPoints - 1) * _yPoints * _zPoints) : -1;
-
-          _neighbour[index].point[16] = (pos && right) ? (index + (_xPoints + 1) * _yPoints * _zPoints) : -1;
-
-          _neighbour[index].point[17] = (pos && front) ? (index + (_xPoints * _yPoints - 1) * _zPoints) : -1;
-
-          _neighbour[index].point[18] = (pos && behind) ? (index + (_xPoints * _yPoints + 1) * _zPoints) : -1;
-
-          _neighbour[index].point[19] = (pos && down) ? (index + (_xPoints * _yPoints * _zPoints - 1)) : -1;
-
-          _neighbour[index].point[20] = (pos && top) ? (index + (_xPoints * _yPoints * _zPoints + 1)) : -1;
-
-          _neighbour[index].point[21] = (left && front) ? (index - (_yPoints + 1) * _zPoints) : -1;
-
-          _neighbour[index].point[22] = (left && behind) ? (index - (_yPoints - 1) * _zPoints) : -1;
-
-          _neighbour[index].point[23] = (left && down) ? (index - (_yPoints * _zPoints + 1)) : -1;
-
-          _neighbour[index].point[24] = (left && top) ? (index - (_yPoints * _zPoints - 1)) : -1;
-
-          _neighbour[index].point[25] = (right && front) ? (index + (_yPoints - 1) * _zPoints) : -1;
-
-          _neighbour[index].point[26] = (right && behind) ? (index + (_yPoints + 1) * _zPoints) : -1;
-
-          _neighbour[index].point[27] = (right && down) ? (index + (_yPoints * _zPoints - 1)) : -1;
-
-          _neighbour[index].point[28] = (right && top) ? (index + (_yPoints * _zPoints + 1)) : -1;
-
-          _neighbour[index].point[29] = (front && down) ? (index - (_zPoints + 1)) : -1;
-
-          _neighbour[index].point[30] = (front && top) ? (index - (_zPoints - 1)) : -1;
-
-          _neighbour[index].point[31] = (behind && down) ? (index + (_zPoints - 1)) : -1;
-
-          _neighbour[index].point[32] = (behind && top) ? (index + (_zPoints + 1)) : -1;
-
           ++index;
         }
       }
     }
   }
-  if (index != _nPoints) {
-    throw std::runtime_error("Error: _neighbour index different than _nPoints");
+  if (index > cubicnPoints) {
+    throw std::runtime_error("Error: _neighbour index greater than _nPoints");
   }
 
+  _nPoints = index;
 	_volume = Surface(_nPoints, temp);
 	delete[] temp;
-  std::cout << "\tDone!\n";
+  std::cout << "\tDone!\t" << _nPoints << std::endl;
 
+  createNeighbour();
 	createProjection();
 	createRho();
 
@@ -464,6 +386,88 @@ void Grid4::createRho() {
   }
 
   _rho = Function(_nPoints);
+}
+
+void Grid4::createNeighbour() {
+  std::cout << "Find neighbours...\n";
+  _neighbour = new Neighbours[_nPoints];
+
+  for (int i = 0; i < _nPoints; ++i) {
+    std::cout << '\r' << i << '/' << _nPoints << std::flush;
+
+    Quaternion q = _volume[i];
+    Quaternion n[32];
+    n[0] = {q.w - _h, q.x     , q.y     , q.z     };
+    n[1] = {q.w + _h, q.x     , q.y     , q.z     };
+    n[2] = {q.w     , q.x - _h, q.y     , q.z     };
+    n[3] = {q.w     , q.x + _h, q.y     , q.z     };
+    n[4] = {q.w     , q.x     , q.y - _h, q.z     };
+    n[5] = {q.w     , q.x     , q.y + _h, q.z     };
+    n[6] = {q.w     , q.x     , q.y     , q.z - _h};
+    n[7] = {q.w     , q.x     , q.y     , q.z + _h};
+    n[8] = {q.w - _h, q.x - _h, q.y     , q.z     };
+    n[9] = {q.w - _h, q.x + _h, q.y     , q.z     };
+    n[10]= {q.w - _h, q.x     , q.y - _h, q.z     };
+    n[11]= {q.w - _h, q.x     , q.y + _h, q.z     };
+    n[12]= {q.w - _h, q.x     , q.y     , q.z - _h};
+    n[13]= {q.w - _h, q.x     , q.y     , q.z + _h};
+    n[14]= {q.w + _h, q.x - _h, q.y     , q.z     };
+    n[15]= {q.w + _h, q.x + _h, q.y     , q.z     };
+    n[16]= {q.w + _h, q.x     , q.y - _h, q.z     };
+    n[17]= {q.w + _h, q.x     , q.y + _h, q.z     };
+    n[18]= {q.w + _h, q.x     , q.y     , q.z - _h};
+    n[19]= {q.w + _h, q.x     , q.y     , q.z + _h};
+    n[20]= {q.w     , q.x - _h, q.y - _h, q.z     };
+    n[21]= {q.w     , q.x - _h, q.y + _h, q.z     };
+    n[22]= {q.w     , q.x - _h, q.y     , q.z - _h};
+    n[23]= {q.w     , q.x - _h, q.y     , q.z + _h};
+    n[24]= {q.w     , q.x + _h, q.y - _h, q.z     };
+    n[25]= {q.w     , q.x + _h, q.y + _h, q.z     };
+    n[26]= {q.w     , q.x + _h, q.y     , q.z - _h};
+    n[27]= {q.w     , q.x + _h, q.y     , q.z + _h};
+    n[28]= {q.w     , q.x     , q.y - _h, q.z - _h};
+    n[29]= {q.w     , q.x     , q.y - _h, q.z + _h};
+    n[30]= {q.w     , q.x     , q.y + _h, q.z - _h};
+    n[31]= {q.w     , q.x     , q.y + _h, q.z + _h};
+
+    _neighbour[i].point[0] = i;
+    std::for_each(std::execution::par_unseq, _indices.begin(), _indices.end(), [&](int idx) {
+      Quaternion r = _volume[idx];
+
+           if (r == n[0] ) _neighbour[i].point[1]  = idx;
+      else if (r == n[1] ) _neighbour[i].point[2]  = idx;
+      else if (r == n[2] ) _neighbour[i].point[3]  = idx;
+      else if (r == n[3] ) _neighbour[i].point[4]  = idx;
+      else if (r == n[4] ) _neighbour[i].point[5]  = idx;
+      else if (r == n[5] ) _neighbour[i].point[6]  = idx;
+      else if (r == n[6] ) _neighbour[i].point[7]  = idx;
+      else if (r == n[7] ) _neighbour[i].point[8]  = idx;
+      else if (r == n[8] ) _neighbour[i].point[9]  = idx;
+      else if (r == n[9] ) _neighbour[i].point[10] = idx;
+      else if (r == n[10]) _neighbour[i].point[11] = idx;
+      else if (r == n[11]) _neighbour[i].point[12] = idx;
+      else if (r == n[12]) _neighbour[i].point[13] = idx;
+      else if (r == n[13]) _neighbour[i].point[14] = idx;
+      else if (r == n[14]) _neighbour[i].point[15] = idx;
+      else if (r == n[15]) _neighbour[i].point[16] = idx;
+      else if (r == n[16]) _neighbour[i].point[17] = idx;
+      else if (r == n[17]) _neighbour[i].point[18] = idx;
+      else if (r == n[18]) _neighbour[i].point[19] = idx;
+      else if (r == n[19]) _neighbour[i].point[20] = idx;
+      else if (r == n[20]) _neighbour[i].point[21] = idx;
+      else if (r == n[21]) _neighbour[i].point[22] = idx;
+      else if (r == n[22]) _neighbour[i].point[23] = idx;
+      else if (r == n[23]) _neighbour[i].point[24] = idx;
+      else if (r == n[24]) _neighbour[i].point[25] = idx;
+      else if (r == n[25]) _neighbour[i].point[26] = idx;
+      else if (r == n[26]) _neighbour[i].point[27] = idx;
+      else if (r == n[27]) _neighbour[i].point[28] = idx;
+      else if (r == n[28]) _neighbour[i].point[29] = idx;
+      else if (r == n[29]) _neighbour[i].point[30] = idx;
+      else if (r == n[30]) _neighbour[i].point[31] = idx;
+      else if (r == n[31]) _neighbour[i].point[32] = idx;
+    });
+  }
 }
 
 void Grid4::createProjection() {

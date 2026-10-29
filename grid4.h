@@ -9,7 +9,13 @@ class Grid4 {
   private:
   // Neighbours structure
   struct Neighbours {
-      int point[33];
+    int point[33];
+
+    Neighbours() {
+      for (int i = 0; i < 33; ++i) {
+        point[i] = -1;
+      }
+    }
   };
 
   // num of points
@@ -76,6 +82,9 @@ class Grid4 {
   private:
   //signed distance from the sphere
   double phi(double w, double x, double y, double z);
+
+  //find the neighbours of every point
+  void createNeighbour();
 
   //create the first rho value
   void createRho();
