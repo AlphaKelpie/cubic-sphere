@@ -3,23 +3,27 @@
 #include <algorithm>
 #include <iostream>
 
-Function::Function() : _nPoints{0}, _f{nullptr} {}
+template<typename Tf>
+Function<Tf>::Function() : _nPoints{0}, _f{nullptr} {}
 
-Function::Function(int np)
+template<typename Tf>
+Function<Tf>::Function(int np)
   : _nPoints{np},
-    _f{new double[np]}
+    _f{new Tf[np]}
 {
   std::fill(_f, _f + np, 0.);
 }
 
-Function::Function(const Function &src)
+template<typename Tf>
+Function<Tf>::Function(const Function &src)
   : _nPoints{src._nPoints},
-    _f{new double[_nPoints]}
+    _f{new Tf[_nPoints]}
 {
   std::copy(src._f, src._f + src._nPoints, _f);
 }
 
-Function::Function(Function &&src)
+template<typename Tf>
+Function<Tf>::Function(Function &&src)
   : _nPoints{src._nPoints},
     _f{src._f}
 {
@@ -27,12 +31,13 @@ Function::Function(Function &&src)
   src._f = nullptr;
 }
 
-Function& Function::operator=(const Function &src) {
+template<typename Tf>
+Function<Tf>& Function<Tf>::operator=(const Function<Tf> &src) {
   // Guard self assignment
   if (this == &src) { return *this; }
 
   if (_nPoints != src._nPoints) {           // resource in *this cannot be reused
-    double* temp = new double[src._nPoints];  // allocate resource, if throws, do nothing
+    Tf* temp = new Tf[src._nPoints];  // allocate resource, if throws, do nothing
     delete[] _f;                         // release resource in *this
     _f = temp;
     _nPoints = src._nPoints;
@@ -42,7 +47,8 @@ Function& Function::operator=(const Function &src) {
   return *this;
 }
 
-Function& Function::operator=(Function &&src) {
+template<typename Tf>
+Function<Tf>& Function<Tf>::operator=(Function<Tf> &&src) {
   // Guard self assignment
   if (this == &src) { return *this; }
 
@@ -55,33 +61,41 @@ Function& Function::operator=(Function &&src) {
   return *this;
 }
 
-Function::~Function() {
+template<typename Tf>
+Function<Tf>::~Function() {
   delete[] _f;
 }
 
-double Function::operator[](int idx) const {
+template<typename Tf>
+Tf Function<Tf>::operator[](int idx) const {
   if (idx >= _nPoints) {
-    throw std::out_of_range("Error: index in 'double Function::[]' bigger than _nPoints");
+    throw std::out_of_range("Error: index in 'Tf Function::[]' bigger than _nPoints");
   }
   if (idx < 0) { return 0.0; }
   return _f[idx];
 }
 
-double& Function::operator[](int idx) {
+template<typename Tf>
+Tf& Function<Tf>::operator[](int idx) {
   if (idx >= _nPoints) {
-    throw std::out_of_range("Error: index in 'double& Function::[]' bigger than _nPoints");
+    throw std::out_of_range("Error: index in 'Tf& Function::[]' bigger than _nPoints");
   }
   if (idx < 0) {
-    throw std::out_of_range("Error: index in 'double& Function::[]' lower than 0");
+    throw std::out_of_range("Error: index in 'Tf& Function::[]' lower than 0");
   }
   return _f[idx];
 }
 
-double* Function::f() const {
+template<typename Tf>
+Tf* Function<Tf>::f() const {
   return _f;
 }
 
-void Function::del() {
+template<typename Tf>
+void Function<Tf>::del() {
   delete[] _f;
   _f = nullptr;
 }
+
+template class Function<double>;
+template class Function<float>;

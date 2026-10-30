@@ -8,14 +8,16 @@
 #include <string>
 #include <tbb/global_control.h>
 
-void evolving(Grid4& g, std::string const& path) {
-  const double deltaT = Params::get().deltaT;
+typedef float Tf;
+
+void evolving(Grid4<Tf>& g, std::string const& path) {
+  const double deltaT = Params<Tf>::get().deltaT;
   std::cout << "\n\033[1;34mEvolving with deltaT = " << deltaT << "\033[0m\n";
-  for (int step = Params::get().step; step < Params::get().total;
-      step+=Params::get().step) {
+  for (int step = Params<Tf>::get().step; step < Params<Tf>::get().total;
+      step+=Params<Tf>::get().step) {
     std::cout << "Step " << step << ": " << std::flush;
     auto t0 = std::chrono::steady_clock::now();
-    for (int sim = 0; sim < Params::get().step; ++sim) {
+    for (int sim = 0; sim < Params<Tf>::get().step; ++sim) {
       g.evolveCN(deltaT);
     }
     auto t1 = std::chrono::steady_clock::now();
@@ -37,24 +39,24 @@ int main(int argc, char* argv[]) {
 
   if (argc == 2) {
     std::cout << "\033[1;36mParams from " << argv[1] << "\033[0m\n";
-    Params::load(argv[1]);
+    Params<Tf>::load(argv[1]);
   } else {
     std::cout << "\033[1;36mParams from params.dat\033[0m\n";
-    Params::load("params.dat");
+    Params<Tf>::load("params.dat");
   }
 
   try
   {
-    std::string const path = Params::get().path;
-    if (!std::filesystem::exists(std::filesystem::path{Params::get().pathdata + "_s.dat"})) {
+    std::string const path = Params<Tf>::get().path;
+    if (!std::filesystem::exists(std::filesystem::path{Params<Tf>::get().pathdata + "_s.dat"})) {
       std::cout << "\033[35mCreating\033[0m\n";
-      Grid4 g(
-        Params::get().w,
-        Params::get().x,
-        Params::get().y,
-        Params::get().z,
-        Params::get().T,
-        Params::get().h
+      Grid4<Tf> g(
+        Params<Tf>::get().w,
+        Params<Tf>::get().x,
+        Params<Tf>::get().y,
+        Params<Tf>::get().z,
+        Params<Tf>::get().T,
+        Params<Tf>::get().h
       );
       g.fillFirstRho();
 
@@ -68,9 +70,9 @@ int main(int argc, char* argv[]) {
     }
     
     else {
-      std::string const pathdata = Params::get().pathdata;
+      std::string const pathdata = Params<Tf>::get().pathdata;
       std::cout << "\033[35mLoading " << pathdata << "\033[0m\n";
-      Grid4 g(pathdata, pathdata, Params::get().T);
+      Grid4<Tf> g(pathdata, pathdata, Params<Tf>::get().T);
       g.saveRho(path + "_init");
 
       evolving(g, path);

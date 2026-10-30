@@ -29,5 +29,4 @@ class Surface {
   }
 };
 
-#include "surface.cpp"
 #endif  //SURFACE_H

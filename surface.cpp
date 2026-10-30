@@ -1,6 +1,3 @@
-#ifndef SURFACE_CPP
-#define SURFACE_CPP
-
 #include "surface.h"
 #include <limits>
 #include <iostream>
@@ -74,4 +71,7 @@ Surface<T>::~Surface() {
   delete[] _data;
 }
 
-#endif
+template class Surface<Point<float>>;
+template class Surface<Point<double>>;
+template class Surface<Quaternion<float>>;
+template class Surface<Quaternion<double>>;

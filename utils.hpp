@@ -3,16 +3,18 @@
 
 #include <ostream>
 
+template <typename Tf>
 struct Interval {
-  double min;
-  double max;
+  Tf min;
+  Tf max;
 };
 
+template <typename Tf>
 struct Point
 {
-  double x = 0;
-  double y = 0;
-  double z = 0;
+  Tf x = 0;
+  Tf y = 0;
+  Tf z = 0;
 
   friend bool operator==(const Point& lhs, const Point& rhs) {
     if(std::abs(lhs.x-rhs.x) <= 1E-14 && std::abs(lhs.y-rhs.y) <= 1E-14 &&
@@ -27,7 +29,7 @@ struct Point
     return os;
   }
 
-  double operator[](int coordinate) const {
+  Tf operator[](int coordinate) const {
     switch (coordinate)
     {
     case 0:
@@ -48,22 +50,23 @@ struct Point
   }
 
   // ATTENZIONE const
-  double D(int i) const {
+  Tf D(int i) const {
     return x*x + y*y + z*z - this->operator[](i)*this->operator[](i);
   }
 
   // ATTENZIONE const
-  double D(int i, int j) const {
+  Tf D(int i, int j) const {
     return -this->operator[](i) * this->operator[](j);
   }
 };
 
+template <typename Tf>
 struct Quaternion
 {
-  double w = 0;
-  double x = 0;
-  double y = 0;
-  double z = 0;
+  Tf w = 0;
+  Tf x = 0;
+  Tf y = 0;
+  Tf z = 0;
 
   friend bool operator==(const Quaternion& lhs, const Quaternion& rhs) {
     if (std::abs(lhs.w-rhs.w) <= 1E-14 && std::abs(lhs.x-rhs.x) <= 1E-14 &&
@@ -78,7 +81,7 @@ struct Quaternion
     return os;
   }
 
-  double operator[](int coordinate) const {
+  Tf operator[](int coordinate) const {
     switch (coordinate)
     {
     case 0:
@@ -102,8 +105,8 @@ struct Quaternion
   }
 
   // ATTENZIONE const
-  double D(int i) const {
-    double result = 0.;
+  Tf D(int i) const {
+    Tf result = 0.;
     for (int j = 0; j < 4; ++j) {
       if (j != i) {
         result += this->operator[](j)*this->operator[](j);
@@ -113,12 +116,13 @@ struct Quaternion
   }
 
   // ATTENZIONE const
-  double D(int i, int j, double delta_i=0., double delta_j=0.) const {
+  Tf D(int i, int j, Tf delta_i=0., Tf delta_j=0.) const {
     return -(this->operator[](i)+delta_i) * (this->operator[](j)+delta_j);
   }
 };
 
-inline double absolute(double x) {
+template <typename Tf>
+inline Tf absolute(Tf x) {
   if (x < 0)
     return -x;
   return x;

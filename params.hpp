@@ -6,21 +6,22 @@
 #include <stdexcept>
 #include <string>
 
+template <typename Tf>
 class Params {
   public:
   // Parameters
   std::string path;
   std::string pathdata;
-  double T;
-  double h;
-  double deltaT{};
-  double deltaC{};
-  Interval w;
-  Interval x;
-  Interval y;
-  Interval z;
-  double radius;
-  Quaternion center;
+  Tf T;
+  Tf h;
+  Tf deltaT{};
+  Tf deltaC{};
+  Interval<Tf> w;
+  Interval<Tf> x;
+  Interval<Tf> y;
+  Interval<Tf> z;
+  Tf radius;
+  Quaternion<Tf> center;
   int total{2002};
   int step{100};
 
@@ -47,18 +48,18 @@ class Params {
     }
 
     std::string key, value;
-    double w_min = 0.;
-    double w_max = 4.;
-    double x_min = 0.;
-    double x_max = 4.;
-    double y_min = 0.;
-    double y_max = 4.;
-    double z_min = 0.;
-    double z_max = 4.;
-    double cw = 2.;
-    double cx = 2.;
-    double cy = 2.;
-    double cz = 2.;
+    Tf w_min = 0.;
+    Tf w_max = 4.;
+    Tf x_min = 0.;
+    Tf x_max = 4.;
+    Tf y_min = 0.;
+    Tf y_max = 4.;
+    Tf z_min = 0.;
+    Tf z_max = 4.;
+    Tf cw = 2.;
+    Tf cx = 2.;
+    Tf cy = 2.;
+    Tf cz = 2.;
     while (fin >> key >> value) {
       if (key == "path") path = value;
       else if (key == "pathdata") pathdata = value;

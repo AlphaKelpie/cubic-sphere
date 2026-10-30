@@ -5,6 +5,7 @@
 #include "surface.h"
 #include "function.h"
 
+template<typename Tf>
 class Grid4 {
   private:
   // Neighbours structure
@@ -24,44 +25,44 @@ class Grid4 {
   int _centerPoint;
 
   // points in the volume
-  Surface<Quaternion> _volume;
+  Surface<Quaternion<Tf>> _volume;
   
   // 16 grid points around projection of each point:
   // first: array of index in _volume of the points
   // second: array of weights
-  std::pair<int[16], double[16]>* _projection;
+  std::pair<int[16], Tf[16]>* _projection;
   
   // 33 grid points around each point and itself
   Neighbours* _neighbour;
 
   // density
-  Function _rho;
+  Function<Tf> _rho;
 
-  double _t;
-  double _h;
+  Tf _t;
+  Tf _h;
 
   // grid dimensions and origins (needed for index arithmetic in createProjection)
   int _wPoints;
   int _xPoints;
   int _yPoints;
   int _zPoints;
-  double _wMin;
-  double _xMin;
-  double _yMin;
-  double _zMin;
+  Tf _wMin;
+  Tf _xMin;
+  Tf _yMin;
+  Tf _zMin;
 
   // Used in std::for_each
   std::vector<int> _indices;
   std::vector<float> _diff;
 
   public:
-  Grid4(Interval w = {0,10},
-    Interval x = {0,10},
-    Interval y = {0,10},
-    Interval z = {0,10},
-    double T = 40.,
-    double h = 0.1);
-  Grid4(std::string surfFile, std::string realFile, double T);
+  Grid4(Interval<Tf> w = {0,10},
+    Interval<Tf> x = {0,10},
+    Interval<Tf> y = {0,10},
+    Interval<Tf> z = {0,10},
+    Tf T = 40.,
+    Tf h = 0.1);
+  Grid4(std::string surfFile, std::string realFile, Tf T);
   ~Grid4();
 
   //set the first values of _rho
@@ -74,17 +75,17 @@ class Grid4 {
   void saveSurface(std::string filename = "simulation");
   void saveRho(std::string filename = "simulation");
 
-  void evolve(double dt = 0);
-  void evolveCN(double dt = 0, int maxIter = 1000, double tol = 1e-3);
-  void evolveCNDiff(double dt = 0, int maxIter = 1000, double tol = 1e-3);
+  void evolve(Tf dt = 0);
+  void evolveCN(Tf dt = 0, int maxIter = 1000, Tf tol = 1e-3);
+  void evolveCNDiff(Tf dt = 0, int maxIter = 1000, Tf tol = 1e-3);
   void project();
 
   private:
   //create volume and neighbour: hypercube case
-  void createVolNeigh(Interval w, Interval x, Interval y, Interval z);
+  void createVolNeigh(Interval<Tf> w, Interval<Tf> x, Interval<Tf> y, Interval<Tf> z);
   
   //create volume: spherical crown case
-  void createVol(Interval w, Interval x, Interval y, Interval z);
+  void createVol(Interval<Tf> w, Interval<Tf> x, Interval<Tf> y, Interval<Tf> z);
   
   //create projection: hypercube case
   void createProjection();
@@ -96,10 +97,10 @@ class Grid4 {
   void createRho();
   
   //signed distance from the sphere
-  double phi(double w, double x, double y, double z);
+  Tf phi(Tf w, Tf x, Tf y, Tf z);
 
   //return the point on the surface which is closest to given point
-  Quaternion closest(Quaternion const& p);
+  Quaternion<Tf> closest(Quaternion<Tf> const& p);
 
   //load the map between each surface point 'p' and the interpolation(closest(neighbour(p))).
   //Returns false if file is not found.
@@ -109,18 +110,18 @@ class Grid4 {
   bool loadRho(std::string filename = "simulation");
 
   //first derivative along one direction
-  double der1(int pointIndex, int direction) const;
+  Tf der1(int pointIndex, int direction) const;
 
   //second derivative along the same direction
-  double der2(int pointIndex, int direction, Quaternion const& pos = {-1., -1., -1., -1.}) const;
+  Tf der2(int pointIndex, int direction, Quaternion<Tf> const& pos = {-1., -1., -1., -1.}) const;
 
   //second mix derivative along two different directions
-  double derij(int pointIndex, int dir1, int dir2, Quaternion const& pos = {-1., -1., -1., -1.}) const;
+  Tf derij(int pointIndex, int dir1, int dir2, Quaternion<Tf> const& pos = {-1., -1., -1., -1.}) const;
 
   // overloads operating on an arbitrary Function (used by evolveCN)
-  double der1(int pointIndex, int direction, Function const& f) const;
-  double der2(int pointIndex, int direction, Function const& f, Quaternion const& pos = {-1., -1., -1., -1.}) const;
-  double derij(int pointIndex, int dir1, int dir2, Function const& f, Quaternion const& pos = {-1., -1., -1., -1.}) const;
+  Tf der1(int pointIndex, int direction, Function<Tf> const& f) const;
+  Tf der2(int pointIndex, int direction, Function<Tf> const& f, Quaternion<Tf> const& pos = {-1., -1., -1., -1.}) const;
+  Tf derij(int pointIndex, int dir1, int dir2, Function<Tf> const& f, Quaternion<Tf> const& pos = {-1., -1., -1., -1.}) const;
 };
 
 #endif

@@ -1,10 +1,11 @@
 #ifndef FUNCTION_H
 #define FUNCTION_H
 
+template <typename Tf>
 class Function {
   private:
   int _nPoints;
-  double* _f;
+  Tf* _f;
 
   public:
   Function();                               //default constructor
@@ -15,10 +16,10 @@ class Function {
   Function& operator=(Function &&src);      //move assignment
   ~Function();                              //destructor
 
-  double operator[](int idx) const;         //idx element of _f
-  double& operator[](int idx);              //idx element of _f
+  Tf operator[](int idx) const;         //idx element of _f
+  Tf& operator[](int idx);              //idx element of _f
 
-  double* f() const;                        //get _f
+  Tf* f() const;                        //get _f
   void del();                               //set _f to nullptr
 };
 
