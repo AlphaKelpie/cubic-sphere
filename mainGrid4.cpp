@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
   {
     std::string const path = Params::get().path;
     if (!std::filesystem::exists(std::filesystem::path{Params::get().pathdata + "_s.dat"})) {
-      std::cout << "\033[33mCreating\033[0m\n";
+      std::cout << "\033[35mCreating\033[0m\n";
       Grid4 g(
         Params::get().w,
         Params::get().x,
@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
       );
       g.fillFirstRho();
 
-      std::cout << "\033[33mSaving\033[0m\n";
+      std::cout << "\033[35mSaving\033[0m\n";
       g.saveProjection(path);
       g.saveNeighbour(path);
       g.saveRho(path + "_init");
