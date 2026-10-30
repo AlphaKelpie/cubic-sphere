@@ -6,6 +6,7 @@
 #include <format>
 #include <iostream>
 #include <string>
+#include <tbb/global_control.h>
 
 void evolving(Grid4& g, std::string const& path) {
   const double deltaT = Params::get().deltaT;
@@ -30,6 +31,10 @@ void evolving(Grid4& g, std::string const& path) {
 }
 
 int main(int argc, char* argv[]) {
+  auto n = tbb::global_control::active_value(tbb::global_control::max_allowed_parallelism);
+  int const max_thread = (n > 64) ? n - 10 : n - 2;
+  tbb::global_control limit(tbb::global_control::max_allowed_parallelism, max_thread);
+
   if (argc == 2) {
     std::cout << "\033[1;36mParams from " << argv[1] << "\033[0m\n";
     Params::load(argv[1]);
