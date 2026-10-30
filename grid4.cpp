@@ -25,54 +25,25 @@ Grid4::Grid4(Interval w, Interval x, Interval y, Interval z, double T, double h)
 		_yMin{y.min},
 		_zMin{z.min}
 {
-	int cubicnPoints = _wPoints * _xPoints * _yPoints * _zPoints;
-
-	// Create surface
-	Quaternion* temp = new Quaternion[cubicnPoints];
-
-  std::cout << "Construct volume and neighbour...\n";
-	//for every point of the descrete domain..
-  int fullIndex = 0;
-  int index = 0;
-  double m;
-  double i;
-  double j;
-  double k;
-  for (short mi = 0; mi < _wPoints; ++mi) {
-    m = w.min + _h * mi;
-    for (short ii = 0; ii < _xPoints; ++ii) {
-      i = x.min + _h * ii;
-      for (short ji = 0; ji < _yPoints; ++ji) {
-        j = y.min + _h * ji;
-        for (short ki = 0; ki < _zPoints; ++ki) {
-          k = z.min + _h * ki;
-          ++fullIndex;
-          std::cout << '\r' << fullIndex << '/' << cubicnPoints << std::flush;
-
-          if (std::abs(phi(m, i, j, k)) > 0.2) { continue; }
-
-          //..add it to the volume
-          temp[index] = {m, i, j, k};
-          ++index;
-        }
-      }
-    }
+  
+  if (Params::get().deltaC == 0.) {  //whole hypercube
+    std::cout << "Whole hypercube model\n";
+    createVolNeigh(w, x, y, z);
+    _indices = std::vector<int>(_nPoints);
+    std::iota(_indices.begin(), _indices.end(), 0);
+    _diff = std::vector<float>(_nPoints, 0);
+    createProjection();
   }
-  if (index > cubicnPoints) {
-    throw std::runtime_error("Error: _neighbour index greater than _nPoints");
+  else { //spheric crown
+    std::cout << "Spheric crown model: DeltaC = " << Params::get().deltaC
+              << std::endl;
+    createVol(w, x, y, z);
+    _indices = std::vector<int>(_nPoints);
+    std::iota(_indices.begin(), _indices.end(), 0);
+    _diff = std::vector<float>(_nPoints, 0);
+    createMaps();
   }
-
-  _nPoints = index;
-	_volume = Surface(_nPoints, temp);
-	delete[] temp;
-  std::cout << "\tDone!\t" << _nPoints << std::endl;
-
-  createMaps();
 	createRho();
-
-  _indices = std::vector<int>(_nPoints);
-  std::iota(_indices.begin(), _indices.end(), 0);
-  _diff = std::vector<float>(_nPoints, 0);
 }
 
 Grid4::Grid4(std::string surfFile, std::string relFile, double T)
@@ -371,20 +342,267 @@ void Grid4::project() {
 // private
 
 
-double Grid4::phi(double w, double x, double y, double z) {
-  Quaternion& c = Params::get().center;
-  return std::sqrt(
-      (w-c.w)*(w-c.w) + (x-c.x)*(x-c.x) + (y-c.y)*(y-c.y) + (z-c.z)*(z-c.z)
-    ) - Params::get().radius;
-}
+void Grid4::createVolNeigh(Interval w, Interval x, Interval y, Interval z) {
+  std::cout << "Construct volume and neighbour...\n";
 
-void Grid4::createRho() {
-  if (_rho.f() != nullptr) {
-    std::cerr << "Warning: rho already created. Deleting it before recreating\n";
-    _rho.del();
+  _nPoints = _wPoints * _xPoints * _yPoints * _zPoints;
+	// Create surface
+	Quaternion* temp = new Quaternion[_nPoints];
+	_neighbour = new Neighbours[_nPoints];
+
+  bool neg;
+  bool pos;
+	bool left;
+	bool right;
+	bool front;
+	bool behind;
+	bool down;
+	bool top;
+  int index = 0;
+  double m;
+  double i;
+  double j;
+  double k;
+  for (short mi = 0; mi < _wPoints; ++mi) {
+    m = w.min + _h * mi;
+    neg = (mi <= 0) ? false : true;
+    pos = (mi >= _wPoints - 1) ? false : true;
+    for (short ii = 0; ii < _xPoints; ++ii) {
+      i = x.min + _h * ii;
+      left = (ii <= 0) ? false : true;
+      right = (ii >= _xPoints - 1) ? false : true;
+      for (short ji = 0; ji < _yPoints; ++ji) {
+        j = y.min + _h * ji;
+        front = (ji <= 0) ? false : true;
+        behind = (ji >= _yPoints - 1) ? false : true;
+        for (short ki = 0; ki < _zPoints; ++ki) {
+          k = z.min + _h * ki;
+          down = (ki <= 0) ? false : true;
+          top = (ki >= _zPoints - 1) ? false : true;
+          std::cout << '\r' << index << '/' << _nPoints << std::flush;
+          //..add it to the volume and..
+          temp[index] = {m, i, j, k};
+          //..create corresponding neighbour
+          _neighbour[index].point[0] = index;   // itself
+          _neighbour[index].point[1] = (neg) ? (index - _xPoints * _yPoints * _zPoints) : -1;
+
+          _neighbour[index].point[2] = (pos) ? (index + _xPoints * _yPoints * _zPoints) : -1;
+
+          _neighbour[index].point[3] = (left) ? (index - _yPoints * _zPoints) : -1;
+
+          _neighbour[index].point[4] = (right) ? (index + _yPoints * _zPoints) : -1;
+
+          _neighbour[index].point[5] = (front) ? (index - _zPoints) : -1;
+
+          _neighbour[index].point[6] = (behind) ? (index + _zPoints) : -1;
+
+          _neighbour[index].point[7] = (down) ? (index - 1) : -1;
+
+          _neighbour[index].point[8] = (top) ? (index + 1) : -1;
+
+          _neighbour[index].point[9] = (neg && left) ? (index - (_xPoints + 1) * _yPoints * _zPoints) : -1;
+
+          _neighbour[index].point[10] = (neg && right) ? (index - (_xPoints - 1) * _yPoints * _zPoints) : -1;
+
+          _neighbour[index].point[11] = (neg && front) ? (index - (_xPoints * _yPoints + 1) * _zPoints) : -1;
+
+          _neighbour[index].point[12] = (neg && behind) ? (index - (_xPoints * _yPoints - 1) * _zPoints) : -1;
+
+          _neighbour[index].point[13] = (neg && down) ? (index - (_xPoints * _yPoints * _zPoints + 1)) : -1;
+
+          _neighbour[index].point[14] = (neg && top) ? (index - (_xPoints * _yPoints * _zPoints - 1)) : -1;
+
+          _neighbour[index].point[15] = (pos && left) ? (index + (_xPoints - 1) * _yPoints * _zPoints) : -1;
+
+          _neighbour[index].point[16] = (pos && right) ? (index + (_xPoints + 1) * _yPoints * _zPoints) : -1;
+
+          _neighbour[index].point[17] = (pos && front) ? (index + (_xPoints * _yPoints - 1) * _zPoints) : -1;
+
+          _neighbour[index].point[18] = (pos && behind) ? (index + (_xPoints * _yPoints + 1) * _zPoints) : -1;
+
+          _neighbour[index].point[19] = (pos && down) ? (index + (_xPoints * _yPoints * _zPoints - 1)) : -1;
+
+          _neighbour[index].point[20] = (pos && top) ? (index + (_xPoints * _yPoints * _zPoints + 1)) : -1;
+
+          _neighbour[index].point[21] = (left && front) ? (index - (_yPoints + 1) * _zPoints) : -1;
+
+          _neighbour[index].point[22] = (left && behind) ? (index - (_yPoints - 1) * _zPoints) : -1;
+
+          _neighbour[index].point[23] = (left && down) ? (index - (_yPoints * _zPoints + 1)) : -1;
+
+          _neighbour[index].point[24] = (left && top) ? (index - (_yPoints * _zPoints - 1)) : -1;
+
+          _neighbour[index].point[25] = (right && front) ? (index + (_yPoints - 1) * _zPoints) : -1;
+
+          _neighbour[index].point[26] = (right && behind) ? (index + (_yPoints + 1) * _zPoints) : -1;
+
+          _neighbour[index].point[27] = (right && down) ? (index + (_yPoints * _zPoints - 1)) : -1;
+
+          _neighbour[index].point[28] = (right && top) ? (index + (_yPoints * _zPoints + 1)) : -1;
+
+          _neighbour[index].point[29] = (front && down) ? (index - (_zPoints + 1)) : -1;
+
+          _neighbour[index].point[30] = (front && top) ? (index - (_zPoints - 1)) : -1;
+
+          _neighbour[index].point[31] = (behind && down) ? (index + (_zPoints - 1)) : -1;
+
+          _neighbour[index].point[32] = (behind && top) ? (index + (_zPoints + 1)) : -1;
+
+          ++index;
+        }
+      }
+    }
+  }
+  if (index != _nPoints) {
+    throw std::runtime_error("Error: _neighbour index different than _nPoints");
   }
 
-  _rho = Function(_nPoints);
+	_volume = Surface(_nPoints, temp);
+	delete[] temp;
+  std::cout << "\tDone!\n";
+}
+
+void Grid4::createVol(Interval w, Interval x, Interval y, Interval z) {
+  std::cout << "Construct volume...\n";
+  int cubicnPoints = _wPoints * _xPoints * _yPoints * _zPoints;
+
+	// Create surface
+	Quaternion* temp = new Quaternion[cubicnPoints];
+
+	//for every point of the descrete domain..
+  int fullIndex = 0;
+  int index = 0;
+  double m;
+  double i;
+  double j;
+  double k;
+  for (short mi = 0; mi < _wPoints; ++mi) {
+    m = w.min + _h * mi;
+    for (short ii = 0; ii < _xPoints; ++ii) {
+      i = x.min + _h * ii;
+      for (short ji = 0; ji < _yPoints; ++ji) {
+        j = y.min + _h * ji;
+        for (short ki = 0; ki < _zPoints; ++ki) {
+          k = z.min + _h * ki;
+          ++fullIndex;
+          std::cout << '\r' << fullIndex << '/' << cubicnPoints << std::flush;
+
+          if (std::abs(phi(m, i, j, k)) > Params::get().deltaC) { continue; }
+
+          //..add it to the volume
+          temp[index] = {m, i, j, k};
+          ++index;
+        }
+      }
+    }
+  }
+  if (index >= cubicnPoints) {
+    throw std::runtime_error("Error: _neighbour index greater than _nPoints");
+  }
+
+  _nPoints = index;
+	_volume = Surface(_nPoints, temp);
+	delete[] temp;
+  std::cout << "\tDone! Final # of points: " << _nPoints << std::endl;
+}
+
+void Grid4::createProjection() {
+  std::cout << "Constructing projection...\n";
+  _projection = new std::pair<int[16], double[16]>[_nPoints];
+
+  // Precompute strides for the 4D grid (w is slowest index, z is fastest)
+  const int strideW = _xPoints * _yPoints * _zPoints;
+  const int strideX = _yPoints * _zPoints;
+  const int strideY = _zPoints;
+  const int strideZ = 1;
+
+  // Helper: given a grid index along one axis and a +1 offset, returns the
+  // clamped neighbour index and flags whether it exists (i.e. is inside the grid).
+  // If the point projected onto the surface lands exactly on the max boundary,
+  // the cube vertex at coord+_h would be out of domain: we clamp to the boundary
+  // itself and assign weight 0 (handled via wd/xd/yd/zd being 0 in that case).
+
+  for (int i = 0; i < _nPoints; ++i) {
+    std::cout << '\r' << i << '/' << _nPoints << std::flush;
+
+    Quaternion c = closest(_volume[i]);
+
+    // Convert c's coordinates to floating-point grid indices
+    // Use round() to snap to the nearest integer — this is robust to the
+    // accumulated floating-point error in c (which is a float computed from
+    // operations on _h, itself not exactly representable in binary).
+    // We take the floor manually: grid index of the lower-left corner.
+    double fw = (c.w - _wMin) / _h;
+    double fx = (c.x - _xMin) / _h;
+    double fy = (c.y - _yMin) / _h;
+    double fz = (c.z - _zMin) / _h;
+
+    // Lower corner indices (clamp to valid range)
+    int iw = std::clamp((int)std::floor(fw), 0, _wPoints - 2);
+    int ix = std::clamp((int)std::floor(fx), 0, _xPoints - 2);
+    int iy = std::clamp((int)std::floor(fy), 0, _yPoints - 2);
+    int iz = std::clamp((int)std::floor(fz), 0, _zPoints - 2);
+
+    // Interpolation fractions (distance from lower corner, in [0,1])
+    double wd = fw - (double)iw;
+    double xd = fx - (double)ix;
+    double yd = fy - (double)iy;
+    double zd = fz - (double)iz;
+    if (wd > 1. || wd < 0.) {
+      throw std::runtime_error("\nError: weight wd out of range [0, 1]");
+    }
+    if (xd > 1. || xd < 0.) {
+      throw std::runtime_error("\nError: weight xd out of range [0, 1]");
+    }
+    if (yd > 1. || yd < 0.) {
+      throw std::runtime_error("\nError: weight yd out of range [0, 1]");
+    }
+    if (zd > 1. || zd < 0.) {
+      throw std::runtime_error("\nError: weight zd out of range [0, 1]");
+    }
+
+    // Base linear index of the lower-left-front-bottom corner
+    int base = iw * strideW + ix * strideX + iy * strideY + iz * strideZ;
+
+    // The 16 vertices of the 4D unit hypercube (w,x,y,z) in {0,1}^4,
+    // ordered to match the weight layout used everywhere else in the code.
+    _projection[i].first[0]  = base;            
+    _projection[i].first[1]  = base                               + strideZ;
+    _projection[i].first[2]  = base                     + strideY;
+    _projection[i].first[3]  = base                     + strideY + strideZ;
+    _projection[i].first[4]  = base           + strideX;
+    _projection[i].first[5]  = base           + strideX           + strideZ;
+    _projection[i].first[6]  = base           + strideX + strideY;
+    _projection[i].first[7]  = base           + strideX + strideY + strideZ;
+    _projection[i].first[8]  = base + strideW;
+    _projection[i].first[9]  = base + strideW                     + strideZ;
+    _projection[i].first[10] = base + strideW           + strideY;
+    _projection[i].first[11] = base + strideW           + strideY + strideZ;
+    _projection[i].first[12] = base + strideW + strideX;
+    _projection[i].first[13] = base + strideW + strideX           + strideZ;
+    _projection[i].first[14] = base + strideW + strideX + strideY;
+    _projection[i].first[15] = base + strideW + strideX + strideY + strideZ;
+
+    // Trilinear interpolation weights
+    _projection[i].second[0]  = (1-wd) * (1-xd) * (1-yd) * (1-zd);
+    _projection[i].second[1]  = (1-wd) * (1-xd) * (1-yd) *    zd;
+    _projection[i].second[2]  = (1-wd) * (1-xd) *    yd  * (1-zd);
+    _projection[i].second[3]  = (1-wd) * (1-xd) *    yd  *    zd;
+    _projection[i].second[4]  = (1-wd) *    xd  * (1-yd) * (1-zd);
+    _projection[i].second[5]  = (1-wd) *    xd  * (1-yd) *    zd;
+    _projection[i].second[6]  = (1-wd) *    xd  *    yd  * (1-zd);
+    _projection[i].second[7]  = (1-wd) *    xd  *    yd  *    zd;
+    _projection[i].second[8]  =    wd  * (1-xd) * (1-yd) * (1-zd);
+    _projection[i].second[9]  =    wd  * (1-xd) * (1-yd) *    zd;
+    _projection[i].second[10] =    wd  * (1-xd) *    yd  * (1-zd);
+    _projection[i].second[11] =    wd  * (1-xd) *    yd  *    zd;
+    _projection[i].second[12] =    wd  *    xd  * (1-yd) * (1-zd);
+    _projection[i].second[13] =    wd  *    xd  * (1-yd) *    zd;
+    _projection[i].second[14] =    wd  *    xd  *    yd  * (1-zd);
+    _projection[i].second[15] =    wd  *    xd  *    yd  *    zd;
+  }
+
+  std::cout << "\tDone!\n";
 }
 
 void Grid4::createMaps() {
@@ -450,32 +668,48 @@ void Grid4::createMaps() {
     Quaternion prbt = {w0 + _h, x0 + _h, y0 + _h, z0 + _h};
 
     //weights
-    double wd = std::clamp((w0 - c.w) / _h, 0., 1.);
-    double xd = std::clamp((x0 - c.x) / _h, 0., 1.);
-    double yd = std::clamp((y0 - c.y) / _h, 0., 1.);
-    double zd = std::clamp((z0 - c.z) / _h, 0., 1.);
-    _projection[i].second[0]  = (1-wd) * (1-xd) * (1-yd) * (1-zd);
-    _projection[i].second[1]  = (1-wd) * (1-xd) * (1-yd) *    zd;
-    _projection[i].second[2]  = (1-wd) * (1-xd) *    yd  * (1-zd);
-    _projection[i].second[3]  = (1-wd) * (1-xd) *    yd  *    zd;
-    _projection[i].second[4]  = (1-wd) *    xd  * (1-yd) * (1-zd);
-    _projection[i].second[5]  = (1-wd) *    xd  * (1-yd) *    zd;
-    _projection[i].second[6]  = (1-wd) *    xd  *    yd  * (1-zd);
-    _projection[i].second[7]  = (1-wd) *    xd  *    yd  *    zd;
-    _projection[i].second[8]  =    wd  * (1-xd) * (1-yd) * (1-zd);
-    _projection[i].second[9]  =    wd  * (1-xd) * (1-yd) *    zd;
-    _projection[i].second[10] =    wd  * (1-xd) *    yd  * (1-zd);
-    _projection[i].second[11] =    wd  * (1-xd) *    yd  *    zd;
-    _projection[i].second[12] =    wd  *    xd  * (1-yd) * (1-zd);
-    _projection[i].second[13] =    wd  *    xd  * (1-yd) *    zd;
-    _projection[i].second[14] =    wd  *    xd  *    yd  * (1-zd);
-    _projection[i].second[15] =    wd  *    xd  *    yd  *    zd;
+    double wd = (c.w - w0) / _h;
+    double xd = (c.x - x0) / _h;
+    double yd = (c.y - y0) / _h;
+    double zd = (c.z - z0) / _h;
+    if (wd > 1. || wd < 0.) {
+      throw std::runtime_error("\nError: weight wd out of range [0, 1]: " + std::to_string(wd) + '\n');
+    }
+    if (xd > 1. || xd < 0.) {
+      throw std::runtime_error("\nError: weight xd out of range [0, 1]: " + std::to_string(xd) + '\n');
+    }
+    if (yd > 1. || yd < 0.) {
+      throw std::runtime_error("\nError: weight yd out of range [0, 1]: " + std::to_string(yd) + '\n');
+    }
+    if (zd > 1. || zd < 0.) {
+      throw std::runtime_error("\nError: weight zd out of range [0, 1]: " + std::to_string(zd) + '\n');
+    }
+
+    //weights
+    {
+      _projection[i].second[0]  = (1-wd) * (1-xd) * (1-yd) * (1-zd);
+      _projection[i].second[1]  = (1-wd) * (1-xd) * (1-yd) *    zd;
+      _projection[i].second[2]  = (1-wd) * (1-xd) *    yd  * (1-zd);
+      _projection[i].second[3]  = (1-wd) * (1-xd) *    yd  *    zd;
+      _projection[i].second[4]  = (1-wd) *    xd  * (1-yd) * (1-zd);
+      _projection[i].second[5]  = (1-wd) *    xd  * (1-yd) *    zd;
+      _projection[i].second[6]  = (1-wd) *    xd  *    yd  * (1-zd);
+      _projection[i].second[7]  = (1-wd) *    xd  *    yd  *    zd;
+      _projection[i].second[8]  =    wd  * (1-xd) * (1-yd) * (1-zd);
+      _projection[i].second[9]  =    wd  * (1-xd) * (1-yd) *    zd;
+      _projection[i].second[10] =    wd  * (1-xd) *    yd  * (1-zd);
+      _projection[i].second[11] =    wd  * (1-xd) *    yd  *    zd;
+      _projection[i].second[12] =    wd  *    xd  * (1-yd) * (1-zd);
+      _projection[i].second[13] =    wd  *    xd  * (1-yd) *    zd;
+      _projection[i].second[14] =    wd  *    xd  *    yd  * (1-zd);
+      _projection[i].second[15] =    wd  *    xd  *    yd  *    zd;
+    }
 
     //search for neighbours and projection quaternion indexes on the nlfd
     //and prbt vertices
     std::for_each(std::execution::par_unseq, _indices.begin(), _indices.end(),
                   [&](int idx) {
-      Quaternion r = _volume[idx];
+      Quaternion const& r = _volume[idx];
 
       //neighbours
            if (r == n[0] ) _neighbour[i].point[1]  = idx;
@@ -517,11 +751,15 @@ void Grid4::createMaps() {
     });
   }
 
+  std::cout << '\n';
+
   //for each quaternion find the projections via nlfd and prbt vertices
   std::for_each(std::execution::par_unseq, _indices.begin(), _indices.end(),
                 [&](int idx) {
-    Neighbours neigh_nlfd = _neighbour[_projection[idx].first[0]];
-    Neighbours neigh_prbt = _neighbour[_projection[idx].first[15]];
+    std::cout << '\r' << idx << '/' << _nPoints << std::flush;
+
+    Neighbours const& neigh_nlfd = _neighbour[_projection[idx].first[0]];
+    Neighbours const& neigh_prbt = _neighbour[_projection[idx].first[15]];
 
     //the other 14 vertices of projection
     _projection[idx].first[1]  = neigh_nlfd.point[8];
@@ -539,93 +777,24 @@ void Grid4::createMaps() {
     _projection[idx].first[13] = neigh_prbt.point[5];
     _projection[idx].first[14] = neigh_prbt.point[7];
   });
-}
-
-void Grid4::createProjection() {
-  std::cout << "Constructing projection...\n";
-  _projection = new std::pair<int[16], double[16]>[_nPoints];
-
-  // Precompute strides for the 4D grid (w is slowest index, z is fastest)
-  const int strideW = _xPoints * _yPoints * _zPoints;
-  const int strideX = _yPoints * _zPoints;
-  const int strideY = _zPoints;
-  const int strideZ = 1;
-
-  // Helper: given a grid index along one axis and a +1 offset, returns the
-  // clamped neighbour index and flags whether it exists (i.e. is inside the grid).
-  // If the point projected onto the surface lands exactly on the max boundary,
-  // the cube vertex at coord+_h would be out of domain: we clamp to the boundary
-  // itself and assign weight 0 (handled via wd/xd/yd/zd being 0 in that case).
-
-  for (int i = 0; i < _nPoints; ++i) {
-    std::cout << '\r' << i << '/' << _nPoints << std::flush;
-
-    Quaternion c = closest(_volume[i]);
-
-    // Convert c's coordinates to floating-point grid indices
-    // Use round() to snap to the nearest integer — this is robust to the
-    // accumulated floating-point error in c (which is a float computed from
-    // operations on _h, itself not exactly representable in binary).
-    // We take the floor manually: grid index of the lower-left corner.
-    double fw = (c.w - _wMin) / _h;
-    double fx = (c.x - _xMin) / _h;
-    double fy = (c.y - _yMin) / _h;
-    double fz = (c.z - _zMin) / _h;
-
-    // Lower corner indices (clamp to valid range)
-    int iw = std::clamp((int)std::floor(fw), 0, _wPoints - 2);
-    int ix = std::clamp((int)std::floor(fx), 0, _xPoints - 2);
-    int iy = std::clamp((int)std::floor(fy), 0, _yPoints - 2);
-    int iz = std::clamp((int)std::floor(fz), 0, _zPoints - 2);
-
-    // Interpolation fractions (distance from lower corner, in [0,1])
-    double wd = std::clamp(fw - (double)iw, 0., 1.);
-    double xd = std::clamp(fx - (double)ix, 0., 1.);
-    double yd = std::clamp(fy - (double)iy, 0., 1.);
-    double zd = std::clamp(fz - (double)iz, 0., 1.);
-
-    // Base linear index of the lower-left-front-bottom corner
-    int base = iw * strideW + ix * strideX + iy * strideY + iz * strideZ;
-
-    // The 16 vertices of the 4D unit hypercube (w,x,y,z) in {0,1}^4,
-    // ordered to match the weight layout used everywhere else in the code.
-    _projection[i].first[0]  = base;            
-    _projection[i].first[1]  = base                               + strideZ;
-    _projection[i].first[2]  = base                     + strideY;
-    _projection[i].first[3]  = base                     + strideY + strideZ;
-    _projection[i].first[4]  = base           + strideX;
-    _projection[i].first[5]  = base           + strideX           + strideZ;
-    _projection[i].first[6]  = base           + strideX + strideY;
-    _projection[i].first[7]  = base           + strideX + strideY + strideZ;
-    _projection[i].first[8]  = base + strideW;
-    _projection[i].first[9]  = base + strideW                     + strideZ;
-    _projection[i].first[10] = base + strideW           + strideY;
-    _projection[i].first[11] = base + strideW           + strideY + strideZ;
-    _projection[i].first[12] = base + strideW + strideX;
-    _projection[i].first[13] = base + strideW + strideX           + strideZ;
-    _projection[i].first[14] = base + strideW + strideX + strideY;
-    _projection[i].first[15] = base + strideW + strideX + strideY + strideZ;
-
-    // Trilinear interpolation weights
-    _projection[i].second[0]  = (1-wd) * (1-xd) * (1-yd) * (1-zd);
-    _projection[i].second[1]  = (1-wd) * (1-xd) * (1-yd) *    zd;
-    _projection[i].second[2]  = (1-wd) * (1-xd) *    yd  * (1-zd);
-    _projection[i].second[3]  = (1-wd) * (1-xd) *    yd  *    zd;
-    _projection[i].second[4]  = (1-wd) *    xd  * (1-yd) * (1-zd);
-    _projection[i].second[5]  = (1-wd) *    xd  * (1-yd) *    zd;
-    _projection[i].second[6]  = (1-wd) *    xd  *    yd  * (1-zd);
-    _projection[i].second[7]  = (1-wd) *    xd  *    yd  *    zd;
-    _projection[i].second[8]  =    wd  * (1-xd) * (1-yd) * (1-zd);
-    _projection[i].second[9]  =    wd  * (1-xd) * (1-yd) *    zd;
-    _projection[i].second[10] =    wd  * (1-xd) *    yd  * (1-zd);
-    _projection[i].second[11] =    wd  * (1-xd) *    yd  *    zd;
-    _projection[i].second[12] =    wd  *    xd  * (1-yd) * (1-zd);
-    _projection[i].second[13] =    wd  *    xd  * (1-yd) *    zd;
-    _projection[i].second[14] =    wd  *    xd  *    yd  * (1-zd);
-    _projection[i].second[15] =    wd  *    xd  *    yd  *    zd;
-  }
 
   std::cout << "\tDone!\n";
+}
+
+void Grid4::createRho() {
+  if (_rho.f() != nullptr) {
+    std::cerr << "Warning: rho already created. Deleting it before recreating\n";
+    _rho.del();
+  }
+
+  _rho = Function(_nPoints);
+}
+
+double Grid4::phi(double w, double x, double y, double z) {
+  Quaternion& c = Params::get().center;
+  return std::sqrt(
+      (w-c.w)*(w-c.w) + (x-c.x)*(x-c.x) + (y-c.y)*(y-c.y) + (z-c.z)*(z-c.z)
+    ) - Params::get().radius;
 }
 
 Quaternion Grid4::closest(Quaternion const& p) {

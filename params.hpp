@@ -14,6 +14,7 @@ class Params {
   double T;
   double h;
   double deltaT{};
+  double deltaC{};
   Interval w;
   Interval x;
   Interval y;
@@ -64,6 +65,7 @@ class Params {
       else if (key == "T") T = std::stof(value);
       else if (key == "h") h = std::stof(value);
       else if (key == "deltaT") deltaT = std::stof(value);
+      else if (key == "deltaC") deltaC = std::stof(value);
       else if (key == "w_min") w_min = std::stof(value);
       else if (key == "w_max") w_max = std::stof(value);
       else if (key == "x_min") x_min = std::stof(value);

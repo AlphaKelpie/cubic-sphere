@@ -3,6 +3,7 @@ pathdata data/base4
 T 6.
 h 0.1
 deltaT 0.
+deltaC .21
 w_min 0.
 w_max 4.
 x_min 0.
@@ -16,5 +17,5 @@ cw 2.
 cx 2.
 cy 2.
 cz 2.
-total 20
+total 5
 step 1

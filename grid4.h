@@ -80,17 +80,23 @@ class Grid4 {
   void project();
 
   private:
-  //signed distance from the sphere
-  double phi(double w, double x, double y, double z);
-
-  //find the neighbours of every point
+  //create volume and neighbour: hypercube case
+  void createVolNeigh(Interval w, Interval x, Interval y, Interval z);
+  
+  //create volume: spherical crown case
+  void createVol(Interval w, Interval x, Interval y, Interval z);
+  
+  //create projection: hypercube case
+  void createProjection();
+  
+  //create neighbour and projection: spherical crown case
   void createMaps();
-
+  
   //create the first rho value
   void createRho();
-
-  //calculate points for projection
-  void createProjection();
+  
+  //signed distance from the sphere
+  double phi(double w, double x, double y, double z);
 
   //return the point on the surface which is closest to given point
   Quaternion closest(Quaternion const& p);
