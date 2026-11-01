@@ -8,7 +8,7 @@
 #include <string>
 #include <tbb/global_control.h>
 
-typedef float Tf;
+typedef double Tf;
 
 void evolving(Grid4<Tf>& g, std::string const& path) {
   const double deltaT = Params<Tf>::get().deltaT;

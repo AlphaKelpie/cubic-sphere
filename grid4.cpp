@@ -479,14 +479,16 @@ void Grid4<Tf>::createVolNeigh(Interval<Tf> w, Interval<Tf> x, Interval<Tf> y, I
 template <typename Tf>
 void Grid4<Tf>::createVol(Interval<Tf> w, Interval<Tf> x, Interval<Tf> y, Interval<Tf> z) {
   std::cout << "Construct volume...\n";
-  int cubicnPoints = _wPoints * _xPoints * _yPoints * _zPoints;
+  std::uint64_t cubicnPoints = static_cast<std::uint64_t>(_wPoints) * _xPoints * _yPoints * _zPoints;
+  std::cout << "Hypercubic # of points: " << cubicnPoints << std::endl;
 
 	// Create surface
-	Quaternion<Tf>* temp = new Quaternion<Tf>[cubicnPoints];
+	std::vector<Quaternion<Tf>> temp;
+  temp.reserve(cubicnPoints / 31);
 
 	//for every point of the descrete domain..
-  int fullIndex = 0;
-  int index = 0;
+  std::uint64_t fullIndex = 0;
+  std::uint64_t index = 0;
   Tf m;
   Tf i;
   Tf j;
@@ -495,29 +497,35 @@ void Grid4<Tf>::createVol(Interval<Tf> w, Interval<Tf> x, Interval<Tf> y, Interv
     m = w.min + _h * mi;
     for (short ii = 0; ii < _xPoints; ++ii) {
       i = x.min + _h * ii;
+      std::cout << '\r' << fullIndex << '\t' << index << std::flush;
       for (short ji = 0; ji < _yPoints; ++ji) {
         j = y.min + _h * ji;
         for (short ki = 0; ki < _zPoints; ++ki) {
           k = z.min + _h * ki;
           ++fullIndex;
-          std::cout << '\r' << fullIndex << '/' << cubicnPoints << std::flush;
 
           if (std::abs(phi(m, i, j, k)) > Params<Tf>::get().deltaC) { continue; }
 
           //..add it to the volume
-          temp[index] = {m, i, j, k};
+          temp.push_back({m, i, j, k});
           ++index;
         }
       }
     }
   }
+
   if (index >= cubicnPoints) {
     throw std::runtime_error("Error: _neighbour index greater than _nPoints");
   }
+  if (index > INT32_MAX) {
+    throw std::runtime_error("Error: too big _volume. Index " + std::to_string(index) + " > INT32_MAX");
+  }
+  if (index != temp.size()) {
+    throw std::runtime_error("Error: Intex != temp.size: " + std::to_string(index) + " != " + std::to_string(temp.size()));
+  }
 
-  _nPoints = index;
-	_volume = Surface(_nPoints, temp);
-	delete[] temp;
+  _nPoints = temp.size();
+	_volume = Surface(_nPoints, temp.data());
   std::cout << "\tDone! Final # of points: " << _nPoints << std::endl;
 }
 
