@@ -686,10 +686,10 @@ void Grid4<Tf>::createMaps() {
     //find the closest point on the hypersphere
     Quaternion c = closest(q);
 
-    Tf w0 = std::floor((c.w - _wMin) / _h) * _h;
-    Tf x0 = std::floor((c.x - _xMin) / _h) * _h;
-    Tf y0 = std::floor((c.y - _yMin) / _h) * _h;
-    Tf z0 = std::floor((c.z - _zMin) / _h) * _h;
+    Tf w0 = std::floor(c.w / _h) * _h;
+    Tf x0 = std::floor(c.x / _h) * _h;
+    Tf y0 = std::floor(c.y / _h) * _h;
+    Tf z0 = std::floor(c.z / _h) * _h;
     //neg-left-front-down vertex projection quaternion coordinates
     Quaternion<Tf> nlfd = {w0, x0, y0, z0};
     //pos-right-behind-top vertex projection quaternion coordinates
