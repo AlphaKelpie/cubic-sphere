@@ -229,15 +229,15 @@ void Grid4<Tf>::evolveCN(Tf dt, int maxIter, Tf tol) {
     dt = 0.1 * _h * _h * _h * _h;
   }
 
-  Tf alpha = _t * dt * 0.5;
+  double alpha = (double)_t * dt * 0.5;
 
   // Explicit half-step: rhs = rho^n + alpha * L(rho^n)
   Function<Tf> rhs(_nPoints);
   std::for_each(std::execution::par_unseq, _indices.begin(), _indices.end(), [&](int idx) {
     Quaternion<Tf> const& p = _volume[idx];
-    Tf Lrho = -_rho[idx]*(1-4)*4; // from sum_i[D'_i rho * a(x)]
+    double Lrho = -(double)_rho[idx]*(1-4)*4; // from sum_i[D'_i rho * a(x)]
     for (int i = 0; i < 4; ++i) {
-      Lrho -= p[i]*(1-4)*der1(idx, i);  // from D'_i rho * a(x)
+      Lrho -= der1(idx, i)*p[i]*(1-4);  // from D'_i rho * a(x)
       for (int j = 0; j < 4; ++j) {
         if (i == j) { // from D''_ii rho * D
           Lrho += der2(idx, i, p);
@@ -258,7 +258,7 @@ void Grid4<Tf>::evolveCN(Tf dt, int maxIter, Tf tol) {
 
     std::for_each(std::execution::par_unseq, _indices.begin(), _indices.end(), [&](int idx) {
       Quaternion<Tf> const& p = _volume[idx];
-      Tf Lrho = -rhoA[idx]*(1-4)*4; // from sum_i[D'_i rho * a(x)]
+      double Lrho = -(double)rhoA[idx]*(1-4)*4; // from sum_i[D'_i rho * a(x)]
       for (int i = 0; i < 4; ++i) {
         Lrho -= p[i]*(1-4)*der1(idx, i, rhoA);  // from D'_i rho * a(x)
         for (int j = 0; j < 4; ++j) {
@@ -285,7 +285,7 @@ void Grid4<Tf>::evolveCN(Tf dt, int maxIter, Tf tol) {
     std::fill(_diff.begin(), _diff.end(), 0.);
   }
 
-  rhoA[_centerPoint] = 0.;
+  if (Params<Tf>::get().deltaC == 0) rhoA[_centerPoint] = 0.;
   _rho = std::move(rhoA);
 }
 
@@ -525,6 +525,7 @@ void Grid4<Tf>::createVol(Interval<Tf> w, Interval<Tf> x, Interval<Tf> y, Interv
   }
 
   _nPoints = temp.size();
+  temp.shrink_to_fit();
 	_volume = Surface(_nPoints, temp.data());
   std::cout << "\tDone! Final # of points: " << _nPoints << std::endl;
 }
@@ -644,38 +645,40 @@ void Grid4<Tf>::createMaps() {
 
     //array of neighbours positions in the grid
     Quaternion<Tf> n[32];
-    n[0]  = {q.w - _h, q.x     , q.y     , q.z     };
-    n[1]  = {q.w + _h, q.x     , q.y     , q.z     };
-    n[2]  = {q.w     , q.x - _h, q.y     , q.z     };
-    n[3]  = {q.w     , q.x + _h, q.y     , q.z     };
-    n[4]  = {q.w     , q.x     , q.y - _h, q.z     };
-    n[5]  = {q.w     , q.x     , q.y + _h, q.z     };
-    n[6]  = {q.w     , q.x     , q.y     , q.z - _h};
-    n[7]  = {q.w     , q.x     , q.y     , q.z + _h};
-    n[8]  = {q.w - _h, q.x - _h, q.y     , q.z     };
-    n[9]  = {q.w - _h, q.x + _h, q.y     , q.z     };
-    n[10] = {q.w - _h, q.x     , q.y - _h, q.z     };
-    n[11] = {q.w - _h, q.x     , q.y + _h, q.z     };
-    n[12] = {q.w - _h, q.x     , q.y     , q.z - _h};
-    n[13] = {q.w - _h, q.x     , q.y     , q.z + _h};
-    n[14] = {q.w + _h, q.x - _h, q.y     , q.z     };
-    n[15] = {q.w + _h, q.x + _h, q.y     , q.z     };
-    n[16] = {q.w + _h, q.x     , q.y - _h, q.z     };
-    n[17] = {q.w + _h, q.x     , q.y + _h, q.z     };
-    n[18] = {q.w + _h, q.x     , q.y     , q.z - _h};
-    n[19] = {q.w + _h, q.x     , q.y     , q.z + _h};
-    n[20] = {q.w     , q.x - _h, q.y - _h, q.z     };
-    n[21] = {q.w     , q.x - _h, q.y + _h, q.z     };
-    n[22] = {q.w     , q.x - _h, q.y     , q.z - _h};
-    n[23] = {q.w     , q.x - _h, q.y     , q.z + _h};
-    n[24] = {q.w     , q.x + _h, q.y - _h, q.z     };
-    n[25] = {q.w     , q.x + _h, q.y + _h, q.z     };
-    n[26] = {q.w     , q.x + _h, q.y     , q.z - _h};
-    n[27] = {q.w     , q.x + _h, q.y     , q.z + _h};
-    n[28] = {q.w     , q.x     , q.y - _h, q.z - _h};
-    n[29] = {q.w     , q.x     , q.y - _h, q.z + _h};
-    n[30] = {q.w     , q.x     , q.y + _h, q.z - _h};
-    n[31] = {q.w     , q.x     , q.y + _h, q.z + _h};
+    {
+      n[0]  = {q.w - _h, q.x     , q.y     , q.z     };
+      n[1]  = {q.w + _h, q.x     , q.y     , q.z     };
+      n[2]  = {q.w     , q.x - _h, q.y     , q.z     };
+      n[3]  = {q.w     , q.x + _h, q.y     , q.z     };
+      n[4]  = {q.w     , q.x     , q.y - _h, q.z     };
+      n[5]  = {q.w     , q.x     , q.y + _h, q.z     };
+      n[6]  = {q.w     , q.x     , q.y     , q.z - _h};
+      n[7]  = {q.w     , q.x     , q.y     , q.z + _h};
+      n[8]  = {q.w - _h, q.x - _h, q.y     , q.z     };
+      n[9]  = {q.w - _h, q.x + _h, q.y     , q.z     };
+      n[10] = {q.w - _h, q.x     , q.y - _h, q.z     };
+      n[11] = {q.w - _h, q.x     , q.y + _h, q.z     };
+      n[12] = {q.w - _h, q.x     , q.y     , q.z - _h};
+      n[13] = {q.w - _h, q.x     , q.y     , q.z + _h};
+      n[14] = {q.w + _h, q.x - _h, q.y     , q.z     };
+      n[15] = {q.w + _h, q.x + _h, q.y     , q.z     };
+      n[16] = {q.w + _h, q.x     , q.y - _h, q.z     };
+      n[17] = {q.w + _h, q.x     , q.y + _h, q.z     };
+      n[18] = {q.w + _h, q.x     , q.y     , q.z - _h};
+      n[19] = {q.w + _h, q.x     , q.y     , q.z + _h};
+      n[20] = {q.w     , q.x - _h, q.y - _h, q.z     };
+      n[21] = {q.w     , q.x - _h, q.y + _h, q.z     };
+      n[22] = {q.w     , q.x - _h, q.y     , q.z - _h};
+      n[23] = {q.w     , q.x - _h, q.y     , q.z + _h};
+      n[24] = {q.w     , q.x + _h, q.y - _h, q.z     };
+      n[25] = {q.w     , q.x + _h, q.y + _h, q.z     };
+      n[26] = {q.w     , q.x + _h, q.y     , q.z - _h};
+      n[27] = {q.w     , q.x + _h, q.y     , q.z + _h};
+      n[28] = {q.w     , q.x     , q.y - _h, q.z - _h};
+      n[29] = {q.w     , q.x     , q.y - _h, q.z + _h};
+      n[30] = {q.w     , q.x     , q.y + _h, q.z - _h};
+      n[31] = {q.w     , q.x     , q.y + _h, q.z + _h};
+    }
 
     //add current quat. index in _neighbour
     _neighbour[i].point[0] = i;
@@ -688,9 +691,9 @@ void Grid4<Tf>::createMaps() {
     Tf y0 = std::floor((c.y - _yMin) / _h) * _h;
     Tf z0 = std::floor((c.z - _zMin) / _h) * _h;
     //neg-left-front-down vertex projection quaternion coordinates
-    Quaternion nlfd = {w0, x0, y0, z0};
+    Quaternion<Tf> nlfd = {w0, x0, y0, z0};
     //pos-right-behind-top vertex projection quaternion coordinates
-    Quaternion prbt = {w0 + _h, x0 + _h, y0 + _h, z0 + _h};
+    Quaternion<Tf> prbt = {w0 + _h, x0 + _h, y0 + _h, z0 + _h};
 
     //weights
     Tf wd = (c.w - w0) / _h;
@@ -972,39 +975,39 @@ bool Grid4<Tf>::loadRho(std::string filename) {
 }
 
 template <typename Tf>
-Tf Grid4<Tf>::der1(int pointIndex, int direction) const {
+double Grid4<Tf>::der1(int pointIndex, int direction) const {
   return der1(pointIndex, direction, _rho);
 }
 
 template <typename Tf>
-Tf Grid4<Tf>::der2(int pointIndex, int direction, Quaternion<Tf> const& pos) const {
+double Grid4<Tf>::der2(int pointIndex, int direction, Quaternion<Tf> const& pos) const {
   return der2(pointIndex, direction, _rho, pos);
 }
 
 template <typename Tf>
-Tf Grid4<Tf>::derij(int pointIndex, int dir1, int dir2, Quaternion<Tf> const& pos) const {
+double Grid4<Tf>::derij(int pointIndex, int dir1, int dir2, Quaternion<Tf> const& pos) const {
   return derij(pointIndex, dir1, dir2, _rho, pos);
 }
 
 template <typename Tf>
-Tf Grid4<Tf>::der1(int pointIndex, int direction, Function<Tf> const& f) const {
+double Grid4<Tf>::der1(int pointIndex, int direction, Function<Tf> const& f) const {
   Neighbours& near = _neighbour[pointIndex];
 
-  Tf result = 0.;
+  double result = 0.;
 
   switch (direction + 1)
   {
   case 1: //w
-    result = (f[near.point[2]] - f[near.point[1]]);
+    result = ((double)f[near.point[2]] - (double)f[near.point[1]]);
     break;
   case 2: //x
-    result = (f[near.point[4]] - f[near.point[3]]);
+    result = ((double)f[near.point[4]] - (double)f[near.point[3]]);
     break;
   case 3: //y
-    result = (f[near.point[6]] - f[near.point[5]]);
+    result = ((double)f[near.point[6]] - (double)f[near.point[5]]);
     break;
   case 4: //z
-    result = (f[near.point[8]] - f[near.point[7]]);
+    result = ((double)f[near.point[8]] - (double)f[near.point[7]]);
     break;
   default:
     throw std::invalid_argument(
@@ -1012,33 +1015,33 @@ Tf Grid4<Tf>::der1(int pointIndex, int direction, Function<Tf> const& f) const {
     break;
   }
 
-  return result / (_h * 2);
+  return result / ((double)_h * 2);
 }
 
 template <typename Tf>
-Tf Grid4<Tf>::der2(int pointIndex, int direction, Function<Tf> const& f, Quaternion<Tf> const& pos) const {
+double Grid4<Tf>::der2(int pointIndex, int direction, Function<Tf> const& f, Quaternion<Tf> const& pos) const {
   Neighbours& near = _neighbour[pointIndex];
 
-  Tf result = 0.;
+  double result = 0.;
   int const exp = (pos == Quaternion<Tf>{-1., -1., -1., -1.}) ? 0 : 1;
 
   switch (direction + 1)
   { // no problem about D+/-(1/2) because D constant over direction
   case 1: //ww
-    result = std::pow(pos.D(0),exp)*(f[near.point[2]] - f[near.point[0]]) +
-      std::pow(pos.D(0),exp)*(f[near.point[1]] - f[near.point[0]]);
+    result = std::pow(pos.D(0),exp)*((double)f[near.point[2]] - (double)f[near.point[0]]) +
+      std::pow(pos.D(0),exp)*((double)f[near.point[1]] - (double)f[near.point[0]]);
     break;
   case 2: //xx
-    result = std::pow(pos.D(1),exp)*(f[near.point[4]] - f[near.point[0]]) +
-      std::pow(pos.D(1),exp)*(f[near.point[3]] - f[near.point[0]]);
+    result = std::pow(pos.D(1),exp)*((double)f[near.point[4]] - (double)f[near.point[0]]) +
+      std::pow(pos.D(1),exp)*((double)f[near.point[3]] - (double)f[near.point[0]]);
     break;
   case 3: //yy
-    result = std::pow(pos.D(2),exp)*(f[near.point[6]] - f[near.point[0]]) +
-      std::pow(pos.D(2),exp)*(f[near.point[5]] - f[near.point[0]]);
+    result = std::pow(pos.D(2),exp)*((double)f[near.point[6]] - (double)f[near.point[0]]) +
+      std::pow(pos.D(2),exp)*((double)f[near.point[5]] - (double)f[near.point[0]]);
     break;
   case 4: //zz
-    result = std::pow(pos.D(3),exp)*(f[near.point[8]] - f[near.point[0]]) +
-      std::pow(pos.D(3),exp)*(f[near.point[7]] - f[near.point[0]]);
+    result = std::pow(pos.D(3),exp)*((double)f[near.point[8]] - (double)f[near.point[0]]) +
+      std::pow(pos.D(3),exp)*((double)f[near.point[7]] - (double)f[near.point[0]]);
     break;
   default:
     throw std::invalid_argument(
@@ -1050,49 +1053,49 @@ Tf Grid4<Tf>::der2(int pointIndex, int direction, Function<Tf> const& f, Quatern
 }
 
 template <typename Tf>
-Tf Grid4<Tf>::derij(int pointIndex, int dir1, int dir2, Function<Tf> const& f, Quaternion<Tf> const& pos) const {
+double Grid4<Tf>::derij(int pointIndex, int dir1, int dir2, Function<Tf> const& f, Quaternion<Tf> const& pos) const {
   Neighbours near = _neighbour[pointIndex];
 
-  Tf result = 0.;
+  double result = 0.;
   int exp = (pos == Quaternion<Tf>{-1., -1., -1., -1.}) ? 0 : 1;
 
   switch ((dir1 + 1) * (dir2 + 1))
   {
   case 2: //wx || xw
-    result = f[near.point[16]]*std::pow(pos.D(0,1,_h,_h),exp) -
-      f[near.point[15]]*std::pow(pos.D(0,1,_h,-_h),exp) -
-      f[near.point[10]]*std::pow(pos.D(0,1,-_h,_h),exp) +
-      f[near.point[9]]*std::pow(pos.D(0,1,-_h,-_h),exp);
+    result = (double)f[near.point[16]]*std::pow(pos.D(0,1,_h,_h),exp) -
+      (double)f[near.point[15]]*std::pow(pos.D(0,1,_h,-_h),exp) -
+      (double)f[near.point[10]]*std::pow(pos.D(0,1,-_h,_h),exp) +
+      (double)f[near.point[9]]*std::pow(pos.D(0,1,-_h,-_h),exp);
     break;
   case 3: //wy || yw
-    result = f[near.point[18]]*std::pow(pos.D(0,2,_h,_h),exp) -
-      f[near.point[17]]*std::pow(pos.D(0,2,_h,-_h),exp) -
-      f[near.point[12]]*std::pow(pos.D(0,2,-_h,_h),exp) +
-      f[near.point[11]]*std::pow(pos.D(0,2,-_h,-_h),exp);
+    result = (double)f[near.point[18]]*std::pow(pos.D(0,2,_h,_h),exp) -
+      (double)f[near.point[17]]*std::pow(pos.D(0,2,_h,-_h),exp) -
+      (double)f[near.point[12]]*std::pow(pos.D(0,2,-_h,_h),exp) +
+      (double)f[near.point[11]]*std::pow(pos.D(0,2,-_h,-_h),exp);
     break;
   case 4: //wz || zw
-    result = f[near.point[20]]*std::pow(pos.D(0,3,_h,_h),exp) -
-      f[near.point[19]]*std::pow(pos.D(0,3,_h,-_h),exp) -
-      f[near.point[14]]*std::pow(pos.D(0,3,-_h,_h),exp) +
-      f[near.point[13]]*std::pow(pos.D(0,3,-_h,-_h),exp);
+    result = (double)f[near.point[20]]*std::pow(pos.D(0,3,_h,_h),exp) -
+      (double)f[near.point[19]]*std::pow(pos.D(0,3,_h,-_h),exp) -
+      (double)f[near.point[14]]*std::pow(pos.D(0,3,-_h,_h),exp) +
+      (double)f[near.point[13]]*std::pow(pos.D(0,3,-_h,-_h),exp);
     break;
   case 6: //xy || yx
-    result = f[near.point[26]]*std::pow(pos.D(1,2,_h,_h),exp) -
-      f[near.point[25]]*std::pow(pos.D(1,2,_h,-_h),exp) -
-      f[near.point[22]]*std::pow(pos.D(1,2,-_h,_h),exp) +
-      f[near.point[21]]*std::pow(pos.D(1,2,-_h,-_h),exp);
+    result = (double)f[near.point[26]]*std::pow(pos.D(1,2,_h,_h),exp) -
+      (double)f[near.point[25]]*std::pow(pos.D(1,2,_h,-_h),exp) -
+      (double)f[near.point[22]]*std::pow(pos.D(1,2,-_h,_h),exp) +
+      (double)f[near.point[21]]*std::pow(pos.D(1,2,-_h,-_h),exp);
     break;
   case 8: //xz || zx
-    result = f[near.point[28]]*std::pow(pos.D(1,3,_h,_h),exp) -
-      f[near.point[27]]*std::pow(pos.D(1,3,_h,-_h),exp) -
-      f[near.point[24]]*std::pow(pos.D(1,3,-_h,_h),exp) +
-      f[near.point[23]]*std::pow(pos.D(1,3,-_h,-_h),exp);
+    result = (double)f[near.point[28]]*std::pow(pos.D(1,3,_h,_h),exp) -
+      (double)f[near.point[27]]*std::pow(pos.D(1,3,_h,-_h),exp) -
+      (double)f[near.point[24]]*std::pow(pos.D(1,3,-_h,_h),exp) +
+      (double)f[near.point[23]]*std::pow(pos.D(1,3,-_h,-_h),exp);
     break;
   case 12: //yz || zy
-    result = f[near.point[32]]*std::pow(pos.D(2,3,_h,_h),exp) -
-      f[near.point[31]]*std::pow(pos.D(2,3,_h,-_h),exp) -
-      f[near.point[30]]*std::pow(pos.D(2,3,-_h,_h),exp) +
-      f[near.point[29]]*std::pow(pos.D(2,3,-_h,-_h),exp);
+    result = (double)f[near.point[32]]*std::pow(pos.D(2,3,_h,_h),exp) -
+      (double)f[near.point[31]]*std::pow(pos.D(2,3,_h,-_h),exp) -
+      (double)f[near.point[30]]*std::pow(pos.D(2,3,-_h,_h),exp) +
+      (double)f[near.point[29]]*std::pow(pos.D(2,3,-_h,-_h),exp);
     break;
   default:
     throw std::invalid_argument(
@@ -1100,7 +1103,7 @@ Tf Grid4<Tf>::derij(int pointIndex, int dir1, int dir2, Function<Tf> const& f, Q
     break;
   }
 
-  return result / (_h * _h * 4);
+  return result / ((double)_h * _h * 4);
 }
 
 template class Grid4<double>;

@@ -105,19 +105,19 @@ struct Quaternion
   }
 
   // ATTENZIONE const
-  Tf D(int i) const {
-    Tf result = 0.;
+  double D(int i) const {
+    double result = 0.;
     for (int j = 0; j < 4; ++j) {
       if (j != i) {
-        result += this->operator[](j)*this->operator[](j);
+        result += (double)this->operator[](j)*(double)this->operator[](j);
       }
     }
     return result;
   }
 
   // ATTENZIONE const
-  Tf D(int i, int j, Tf delta_i=0., Tf delta_j=0.) const {
-    return -(this->operator[](i)+delta_i) * (this->operator[](j)+delta_j);
+  double D(int i, int j, Tf delta_i=0., Tf delta_j=0.) const {
+    return -((double)this->operator[](i)+delta_i) * ((double)this->operator[](j)+delta_j);
   }
 };
 

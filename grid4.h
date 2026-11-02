@@ -110,18 +110,18 @@ class Grid4 {
   bool loadRho(std::string filename = "simulation");
 
   //first derivative along one direction
-  Tf der1(int pointIndex, int direction) const;
+  double der1(int pointIndex, int direction) const;
 
   //second derivative along the same direction
-  Tf der2(int pointIndex, int direction, Quaternion<Tf> const& pos = {-1., -1., -1., -1.}) const;
+  double der2(int pointIndex, int direction, Quaternion<Tf> const& pos = {-1., -1., -1., -1.}) const;
 
   //second mix derivative along two different directions
-  Tf derij(int pointIndex, int dir1, int dir2, Quaternion<Tf> const& pos = {-1., -1., -1., -1.}) const;
+  double derij(int pointIndex, int dir1, int dir2, Quaternion<Tf> const& pos = {-1., -1., -1., -1.}) const;
 
   // overloads operating on an arbitrary Function (used by evolveCN)
-  Tf der1(int pointIndex, int direction, Function<Tf> const& f) const;
-  Tf der2(int pointIndex, int direction, Function<Tf> const& f, Quaternion<Tf> const& pos = {-1., -1., -1., -1.}) const;
-  Tf derij(int pointIndex, int dir1, int dir2, Function<Tf> const& f, Quaternion<Tf> const& pos = {-1., -1., -1., -1.}) const;
+  double der1(int pointIndex, int direction, Function<Tf> const& f) const;
+  double der2(int pointIndex, int direction, Function<Tf> const& f, Quaternion<Tf> const& pos = {-1., -1., -1., -1.}) const;
+  double derij(int pointIndex, int dir1, int dir2, Function<Tf> const& f, Quaternion<Tf> const& pos = {-1., -1., -1., -1.}) const;
 };
 
 #endif
