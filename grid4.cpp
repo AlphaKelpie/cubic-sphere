@@ -1,5 +1,6 @@
 #include "grid4.h"
 #include "params.hpp"
+#include "nanoflann/include/nanoflann.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -536,10 +537,10 @@ void Grid4<Tf>::createProjection() {
   _projection = new std::pair<int[16], Tf[16]>[_nPoints];
 
   // Precompute strides for the 4D grid (w is slowest index, z is fastest)
-  const int strideW = _xPoints * _yPoints * _zPoints;
-  const int strideX = _yPoints * _zPoints;
-  const int strideY = _zPoints;
-  const int strideZ = 1;
+  int const strideW = _xPoints * _yPoints * _zPoints;
+  int const strideX = _yPoints * _zPoints;
+  int const strideY = _zPoints;
+  int const strideZ = 1;
 
   // Helper: given a grid index along one axis and a +1 offset, returns the
   // clamped neighbour index and flags whether it exists (i.e. is inside the grid).
@@ -587,7 +588,7 @@ void Grid4<Tf>::createProjection() {
     }
 
     // Base linear index of the lower-left-front-bottom corner
-    int base = iw * strideW + ix * strideX + iy * strideY + iz * strideZ;
+    int const base = iw * strideW + ix * strideX + iy * strideY + iz * strideZ;
 
     // The 16 vertices of the 4D unit hypercube (w,x,y,z) in {0,1}^4,
     // ordered to match the weight layout used everywhere else in the code.
@@ -636,6 +637,15 @@ void Grid4<Tf>::createMaps() {
 
   _neighbour = new Neighbours[_nPoints];
   _projection = new std::pair<int[16], Tf[16]>[_nPoints];
+
+  using KDTree = nanoflann::KDTreeSingleIndexAdaptor<
+    nanoflann::L2_Simple_Adaptor<
+      Tf, Surface<Quaternion<Tf>>>,
+    Surface<Quaternion<Tf>>, 4>;
+  KDTree tree(4, _volume);
+  tree.buildIndex();
+  Tf const search_radius = (_h * 2.1) * (_h * 2.1);
+
 
   for (int i = 0; i < _nPoints; ++i) {  //for each quaternion..
     std::cout << '\r' << i << '/' << _nPoints << std::flush;
@@ -691,9 +701,9 @@ void Grid4<Tf>::createMaps() {
     Tf y0 = std::floor(c.y / _h) * _h;
     Tf z0 = std::floor(c.z / _h) * _h;
     //neg-left-front-down vertex projection quaternion coordinates
-    Quaternion<Tf> nlfd = {w0, x0, y0, z0};
+    Tf nlfd[4] = {(Tf)w0, (Tf)x0, (Tf)y0, (Tf)z0};
     //pos-right-behind-top vertex projection quaternion coordinates
-    Quaternion<Tf> prbt = {w0 + _h, x0 + _h, y0 + _h, z0 + _h};
+    Tf prbt[4] = {(Tf)(w0 + _h), (Tf)(x0 + _h), (Tf)(y0 + _h), (Tf)(z0 + _h)};
 
     //weights
     Tf wd = (c.w - w0) / _h;
@@ -735,48 +745,61 @@ void Grid4<Tf>::createMaps() {
 
     //search for neighbours and projection quaternion indexes on the nlfd
     //and prbt vertices
-    std::for_each(std::execution::par_unseq, _indices.begin(), _indices.end(),
-                  [&](int idx) {
-      Quaternion<Tf> const& r = _volume[idx];
+    Tf const query[4] = {(Tf)q[0], (Tf)q[1], (Tf)q[2], (Tf)q[3]};
+    std::vector<nanoflann::ResultItem<uint32_t, Tf>> ret_matches;
+    tree.radiusSearch(&query[0], search_radius, ret_matches);
+    std::for_each(std::execution::par_unseq, ret_matches.begin(), ret_matches.end(),
+                  [&](auto result) {
+      Quaternion<Tf> const r = _volume[result.first];
 
       //neighbours
-           if (r == n[0] ) _neighbour[i].point[1]  = idx;
-      else if (r == n[1] ) _neighbour[i].point[2]  = idx;
-      else if (r == n[2] ) _neighbour[i].point[3]  = idx;
-      else if (r == n[3] ) _neighbour[i].point[4]  = idx;
-      else if (r == n[4] ) _neighbour[i].point[5]  = idx;
-      else if (r == n[5] ) _neighbour[i].point[6]  = idx;
-      else if (r == n[6] ) _neighbour[i].point[7]  = idx;
-      else if (r == n[7] ) _neighbour[i].point[8]  = idx;
-      else if (r == n[8] ) _neighbour[i].point[9]  = idx;
-      else if (r == n[9] ) _neighbour[i].point[10] = idx;
-      else if (r == n[10]) _neighbour[i].point[11] = idx;
-      else if (r == n[11]) _neighbour[i].point[12] = idx;
-      else if (r == n[12]) _neighbour[i].point[13] = idx;
-      else if (r == n[13]) _neighbour[i].point[14] = idx;
-      else if (r == n[14]) _neighbour[i].point[15] = idx;
-      else if (r == n[15]) _neighbour[i].point[16] = idx;
-      else if (r == n[16]) _neighbour[i].point[17] = idx;
-      else if (r == n[17]) _neighbour[i].point[18] = idx;
-      else if (r == n[18]) _neighbour[i].point[19] = idx;
-      else if (r == n[19]) _neighbour[i].point[20] = idx;
-      else if (r == n[20]) _neighbour[i].point[21] = idx;
-      else if (r == n[21]) _neighbour[i].point[22] = idx;
-      else if (r == n[22]) _neighbour[i].point[23] = idx;
-      else if (r == n[23]) _neighbour[i].point[24] = idx;
-      else if (r == n[24]) _neighbour[i].point[25] = idx;
-      else if (r == n[25]) _neighbour[i].point[26] = idx;
-      else if (r == n[26]) _neighbour[i].point[27] = idx;
-      else if (r == n[27]) _neighbour[i].point[28] = idx;
-      else if (r == n[28]) _neighbour[i].point[29] = idx;
-      else if (r == n[29]) _neighbour[i].point[30] = idx;
-      else if (r == n[30]) _neighbour[i].point[31] = idx;
-      else if (r == n[31]) _neighbour[i].point[32] = idx;
-
-      //nlfd and prbt projections
-           if (r == nlfd) _projection[i].first[0]  = idx;
-      else if (r == prbt) _projection[i].first[15] = idx;
+           if (r == n[0] ) _neighbour[i].point[1]  = result.first;
+      else if (r == n[1] ) _neighbour[i].point[2]  = result.first;
+      else if (r == n[2] ) _neighbour[i].point[3]  = result.first;
+      else if (r == n[3] ) _neighbour[i].point[4]  = result.first;
+      else if (r == n[4] ) _neighbour[i].point[5]  = result.first;
+      else if (r == n[5] ) _neighbour[i].point[6]  = result.first;
+      else if (r == n[6] ) _neighbour[i].point[7]  = result.first;
+      else if (r == n[7] ) _neighbour[i].point[8]  = result.first;
+      else if (r == n[8] ) _neighbour[i].point[9]  = result.first;
+      else if (r == n[9] ) _neighbour[i].point[10] = result.first;
+      else if (r == n[10]) _neighbour[i].point[11] = result.first;
+      else if (r == n[11]) _neighbour[i].point[12] = result.first;
+      else if (r == n[12]) _neighbour[i].point[13] = result.first;
+      else if (r == n[13]) _neighbour[i].point[14] = result.first;
+      else if (r == n[14]) _neighbour[i].point[15] = result.first;
+      else if (r == n[15]) _neighbour[i].point[16] = result.first;
+      else if (r == n[16]) _neighbour[i].point[17] = result.first;
+      else if (r == n[17]) _neighbour[i].point[18] = result.first;
+      else if (r == n[18]) _neighbour[i].point[19] = result.first;
+      else if (r == n[19]) _neighbour[i].point[20] = result.first;
+      else if (r == n[20]) _neighbour[i].point[21] = result.first;
+      else if (r == n[21]) _neighbour[i].point[22] = result.first;
+      else if (r == n[22]) _neighbour[i].point[23] = result.first;
+      else if (r == n[23]) _neighbour[i].point[24] = result.first;
+      else if (r == n[24]) _neighbour[i].point[25] = result.first;
+      else if (r == n[25]) _neighbour[i].point[26] = result.first;
+      else if (r == n[26]) _neighbour[i].point[27] = result.first;
+      else if (r == n[27]) _neighbour[i].point[28] = result.first;
+      else if (r == n[28]) _neighbour[i].point[29] = result.first;
+      else if (r == n[29]) _neighbour[i].point[30] = result.first;
+      else if (r == n[30]) _neighbour[i].point[31] = result.first;
+      else if (r == n[31]) _neighbour[i].point[32] = result.first;
     });
+
+    //nlfd and prbt _volume points
+    std::vector<uint32_t> ret_index(1);
+    std::vector<Tf> out_dist_sqr(1);
+    tree.knnSearch(&nlfd[0], 1, &ret_index[0], &out_dist_sqr[0]);
+    if (out_dist_sqr[0] > _h / 100) {
+      throw std::runtime_error("Error: too far nldf point found");
+    }
+    _projection[i].first[0] = ret_index[0];
+    tree.knnSearch(&prbt[0], 1, &ret_index[0], &out_dist_sqr[0]);
+    if (out_dist_sqr[0] > _h / 100) {
+      throw std::runtime_error("Error: too far prbt point found");
+    }
+    _projection[i].first[15] = ret_index[0];
   }
 
   std::cout << '\n';
@@ -784,7 +807,6 @@ void Grid4<Tf>::createMaps() {
   //for each quaternion find the projections via nlfd and prbt vertices
   std::for_each(std::execution::par_unseq, _indices.begin(), _indices.end(),
                 [&](int idx) {
-    std::cout << '\r' << idx << '/' << _nPoints << std::flush;
 
     Neighbours const& neigh_nlfd = _neighbour[_projection[idx].first[0]];
     Neighbours const& neigh_prbt = _neighbour[_projection[idx].first[15]];

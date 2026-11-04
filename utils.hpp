@@ -29,7 +29,8 @@ struct Point
     return os;
   }
 
-  Tf operator[](int coordinate) const {
+  template<typename Ti>
+  Tf operator[](Ti const coordinate) const {
     switch (coordinate)
     {
     case 0:
@@ -81,7 +82,8 @@ struct Quaternion
     return os;
   }
 
-  Tf operator[](int coordinate) const {
+  template<typename Ti>
+  Tf operator[](Ti const coordinate) const {
     switch (coordinate)
     {
     case 0:
