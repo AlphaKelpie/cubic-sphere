@@ -1,9 +1,9 @@
 path data/sim_2
 pathdata data/base4
 T 6.
-h 0.1
+h 0.01
 deltaT 0.
-deltaC .21
+deltaC .1
 w_min 0.
 w_max 4.
 x_min 0.
