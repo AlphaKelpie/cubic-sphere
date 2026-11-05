@@ -646,51 +646,51 @@ void Grid4<Tf>::createMaps() {
   for (int i = 0; i < _nPoints; ++i) {  //for each quaternion..
 
     //current quaternion
-    Quaternion<double> q = _volume[i];
+    Quaternion<double> q_double = _volume[i];
+    Quaternion<Tf> q_Tf = _volume[i];
 
     //array of neighbours positions in the grid
-    Quaternion<double> n[32];
+    Quaternion<Tf> n[32];
     {
-      n[0]  = {q.w - _h, q.x     , q.y     , q.z     };
-      n[1]  = {q.w + _h, q.x     , q.y     , q.z     };
-      n[2]  = {q.w     , q.x - _h, q.y     , q.z     };
-      n[3]  = {q.w     , q.x + _h, q.y     , q.z     };
-      n[4]  = {q.w     , q.x     , q.y - _h, q.z     };
-      n[5]  = {q.w     , q.x     , q.y + _h, q.z     };
-      n[6]  = {q.w     , q.x     , q.y     , q.z - _h};
-      n[7]  = {q.w     , q.x     , q.y     , q.z + _h};
-      n[8]  = {q.w - _h, q.x - _h, q.y     , q.z     };
-      n[9]  = {q.w - _h, q.x + _h, q.y     , q.z     };
-      n[10] = {q.w - _h, q.x     , q.y - _h, q.z     };
-      n[11] = {q.w - _h, q.x     , q.y + _h, q.z     };
-      n[12] = {q.w - _h, q.x     , q.y     , q.z - _h};
-      n[13] = {q.w - _h, q.x     , q.y     , q.z + _h};
-      n[14] = {q.w + _h, q.x - _h, q.y     , q.z     };
-      n[15] = {q.w + _h, q.x + _h, q.y     , q.z     };
-      n[16] = {q.w + _h, q.x     , q.y - _h, q.z     };
-      n[17] = {q.w + _h, q.x     , q.y + _h, q.z     };
-      n[18] = {q.w + _h, q.x     , q.y     , q.z - _h};
-      n[19] = {q.w + _h, q.x     , q.y     , q.z + _h};
-      n[20] = {q.w     , q.x - _h, q.y - _h, q.z     };
-      n[21] = {q.w     , q.x - _h, q.y + _h, q.z     };
-      n[22] = {q.w     , q.x - _h, q.y     , q.z - _h};
-      n[23] = {q.w     , q.x - _h, q.y     , q.z + _h};
-      n[24] = {q.w     , q.x + _h, q.y - _h, q.z     };
-      n[25] = {q.w     , q.x + _h, q.y + _h, q.z     };
-      n[26] = {q.w     , q.x + _h, q.y     , q.z - _h};
-      n[27] = {q.w     , q.x + _h, q.y     , q.z + _h};
-      n[28] = {q.w     , q.x     , q.y - _h, q.z - _h};
-      n[29] = {q.w     , q.x     , q.y - _h, q.z + _h};
-      n[30] = {q.w     , q.x     , q.y + _h, q.z - _h};
-      n[31] = {q.w     , q.x     , q.y + _h, q.z + _h};
+      n[0]  = {q_Tf.w - (Tf)_h, q_Tf.x     , q_Tf.y     , q_Tf.z     };
+      n[1]  = {q_Tf.w + (Tf)_h, q_Tf.x     , q_Tf.y     , q_Tf.z     };
+      n[2]  = {q_Tf.w     , q_Tf.x - (Tf)_h, q_Tf.y     , q_Tf.z     };
+      n[3]  = {q_Tf.w     , q_Tf.x + (Tf)_h, q_Tf.y     , q_Tf.z     };
+      n[4]  = {q_Tf.w     , q_Tf.x     , q_Tf.y - (Tf)_h, q_Tf.z     };
+      n[5]  = {q_Tf.w     , q_Tf.x     , q_Tf.y + (Tf)_h, q_Tf.z     };
+      n[6]  = {q_Tf.w     , q_Tf.x     , q_Tf.y     , q_Tf.z - (Tf)_h};
+      n[7]  = {q_Tf.w     , q_Tf.x     , q_Tf.y     , q_Tf.z + (Tf)_h};
+      n[8]  = {q_Tf.w - (Tf)_h, q_Tf.x - (Tf)_h, q_Tf.y     , q_Tf.z     };
+      n[9]  = {q_Tf.w - (Tf)_h, q_Tf.x + (Tf)_h, q_Tf.y     , q_Tf.z     };
+      n[10] = {q_Tf.w - (Tf)_h, q_Tf.x     , q_Tf.y - (Tf)_h, q_Tf.z     };
+      n[11] = {q_Tf.w - (Tf)_h, q_Tf.x     , q_Tf.y + (Tf)_h, q_Tf.z     };
+      n[12] = {q_Tf.w - (Tf)_h, q_Tf.x     , q_Tf.y     , q_Tf.z - (Tf)_h};
+      n[13] = {q_Tf.w - (Tf)_h, q_Tf.x     , q_Tf.y     , q_Tf.z + (Tf)_h};
+      n[14] = {q_Tf.w + (Tf)_h, q_Tf.x - (Tf)_h, q_Tf.y     , q_Tf.z     };
+      n[15] = {q_Tf.w + (Tf)_h, q_Tf.x + (Tf)_h, q_Tf.y     , q_Tf.z     };
+      n[16] = {q_Tf.w + (Tf)_h, q_Tf.x     , q_Tf.y - (Tf)_h, q_Tf.z     };
+      n[17] = {q_Tf.w + (Tf)_h, q_Tf.x     , q_Tf.y + (Tf)_h, q_Tf.z     };
+      n[18] = {q_Tf.w + (Tf)_h, q_Tf.x     , q_Tf.y     , q_Tf.z - (Tf)_h};
+      n[19] = {q_Tf.w + (Tf)_h, q_Tf.x     , q_Tf.y     , q_Tf.z + (Tf)_h};
+      n[20] = {q_Tf.w     , q_Tf.x - (Tf)_h, q_Tf.y - (Tf)_h, q_Tf.z     };
+      n[21] = {q_Tf.w     , q_Tf.x - (Tf)_h, q_Tf.y + (Tf)_h, q_Tf.z     };
+      n[22] = {q_Tf.w     , q_Tf.x - (Tf)_h, q_Tf.y     , q_Tf.z - (Tf)_h};
+      n[23] = {q_Tf.w     , q_Tf.x - (Tf)_h, q_Tf.y     , q_Tf.z + (Tf)_h};
+      n[24] = {q_Tf.w     , q_Tf.x + (Tf)_h, q_Tf.y - (Tf)_h, q_Tf.z     };
+      n[25] = {q_Tf.w     , q_Tf.x + (Tf)_h, q_Tf.y + (Tf)_h, q_Tf.z     };
+      n[26] = {q_Tf.w     , q_Tf.x + (Tf)_h, q_Tf.y     , q_Tf.z - (Tf)_h};
+      n[27] = {q_Tf.w     , q_Tf.x + (Tf)_h, q_Tf.y     , q_Tf.z + (Tf)_h};
+      n[28] = {q_Tf.w     , q_Tf.x     , q_Tf.y - (Tf)_h, q_Tf.z - (Tf)_h};
+      n[29] = {q_Tf.w     , q_Tf.x     , q_Tf.y - (Tf)_h, q_Tf.z + (Tf)_h};
+      n[30] = {q_Tf.w     , q_Tf.x     , q_Tf.y + (Tf)_h, q_Tf.z - (Tf)_h};
+      n[31] = {q_Tf.w     , q_Tf.x     , q_Tf.y + (Tf)_h, q_Tf.z + (Tf)_h};
     }
-    for (uint16_t a = 0; a < 32; ++a) { std::cout << a << ": " << n[a] << std::endl;}
 
     //add current quat. index in _neighbour
     _neighbour[i].point[0] = i;
 
     //find the closest point on the hypersphere
-    Quaternion<double> c = closest(q);
+    Quaternion<double> c = closest(q_double);
 
     double w0 = std::floor(c.w / _h) * _h;
     double x0 = std::floor(c.x / _h) * _h;
@@ -741,7 +741,7 @@ void Grid4<Tf>::createMaps() {
 
     //search for neighbours and projection quaternion indexes on the nlfd
     //and prbt vertices
-    Tf const query[4] = {(Tf)q[0], (Tf)q[1], (Tf)q[2], (Tf)q[3]};
+    Tf const query[4] = {q_Tf.w, q_Tf.x, q_Tf.y, q_Tf.z};
     std::vector<nanoflann::ResultItem<uint32_t, Tf>> ret_matches;
     uint32_t rs = tree.radiusSearch(&query[0], search_radius, ret_matches);
     if (rs == 0) {
