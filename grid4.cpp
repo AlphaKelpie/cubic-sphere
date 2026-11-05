@@ -638,7 +638,9 @@ void Grid4<Tf>::createMaps() {
     nanoflann::L2_Simple_Adaptor<
       Tf, Surface<Quaternion<Tf>>>,
     Surface<Quaternion<Tf>>, 4>;
-  KDTree tree(4, _volume);
+  nanoflann::KDTreeSingleIndexAdaptorParams KDTparams;
+  KDTparams.n_thread_build = 0;
+  KDTree tree(4, _volume, KDTparams);
   tree.buildIndex();
   Tf const search_radius = (_h * 2.1) * (_h * 2.1);
 

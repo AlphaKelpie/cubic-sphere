@@ -34,7 +34,7 @@ void evolving(Grid4<Tf>& g, std::string const& path) {
 
 int main(int argc, char* argv[]) {
   auto n = tbb::global_control::active_value(tbb::global_control::max_allowed_parallelism);
-  int const max_thread = (n > 64) ? n - 10 : n - 2;
+  int const max_thread = (n > 64) ? n - 20 : n - 2;
   tbb::global_control limit(tbb::global_control::max_allowed_parallelism, max_thread);
 
   if (argc == 2) {
