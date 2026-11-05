@@ -58,12 +58,12 @@ int main(int argc, char* argv[]) {
         Params::get().T,
         Params::get().h
       );
-      g.saveProjection(path);
-      g.saveNeighbour(path);
-      g.saveSurface(path);
       g.fillFirstRho();
-      
+
       std::cout << "\033[35mSaving\033[0m\n";
+      g.saveSurface(path);
+      g.saveNeighbour(path);
+      g.saveProjection(path);
       g.saveRho(path + "_init");
 
       evolving(g, path);
