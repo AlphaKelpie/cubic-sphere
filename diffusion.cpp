@@ -1,11 +1,11 @@
-#include "grid4.h"
-#include "params.hpp"
-
 #include <format>
 #include <iostream>
 #include <string>
 
-int main(int argc, char *argv[]) {
+#include "grid4.h"
+#include "params.hpp"
+
+int main(int argc, char* argv[]) {
   if (argc == 2) {
     Params::load(argv[1]);
   } else {
@@ -16,8 +16,9 @@ int main(int argc, char *argv[]) {
     std::string const path = Params::get().path;
     {
       std::cout << "Creating\n";
-      Grid4<double> g(Params::get().w, Params::get().x, Params::get().y,
-              Params::get().z, Params::get().T, Params::get().h);
+      Grid4<double> g(
+          Params::get().w, Params::get().x, Params::get().y, Params::get().z,
+          Params::get().T, Params::get().h);
       g.fillIdxRho();
 
       std::cout << "Saving\n";
@@ -47,7 +48,7 @@ int main(int argc, char *argv[]) {
 
     std::cout << "End\n";
     return 0;
-  } catch (const std::exception &e) {
+  } catch (const std::exception& e) {
     std::cerr << e.what() << '\n';
     return 1;
   }

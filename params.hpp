@@ -1,31 +1,32 @@
 #ifndef PARAMS_H
 #define PARAMS_H
 
-#include "utils.hpp"
 #include <fstream>
 #include <stdexcept>
 #include <string>
 
+#include "utils.hpp"
+
 class Params {
-public:
+ public:
   // Parameters
-  std::string path;
-  std::string pathdata;
-  double T;
-  double h;
-  double deltaT{};
-  double deltaC{};
-  Interval<double> w;
-  Interval<double> x;
-  Interval<double> y;
-  Interval<double> z;
-  double radius;
+  std::string        path;
+  std::string        pathdata;
+  double             T;
+  double             h;
+  double             deltaT{};
+  double             deltaC{};
+  Interval<double>   w;
+  Interval<double>   x;
+  Interval<double>   y;
+  Interval<double>   z;
+  double             radius;
   Quaternion<double> center;
-  int total{2002};
-  int step{100};
+  int                total{2002};
+  int                step{100};
 
   // Global istance access
-  static Params &get() {
+  static Params& get() {
     if (!_instance) {
       throw std::runtime_error(
           "Params not initialized! Call Params::load() first.");
@@ -36,8 +37,8 @@ public:
   // Load file and create istance
   static void load(std::string filename) { _instance = new Params(filename); }
 
-private:
-  inline static Params *_instance = nullptr;
+ private:
+  inline static Params* _instance = nullptr;
 
   Params(std::string filename) {
     std::fstream fin(filename, std::ios::in);
@@ -46,18 +47,18 @@ private:
     }
 
     std::string key, value;
-    double w_min = 0.;
-    double w_max = 4.;
-    double x_min = 0.;
-    double x_max = 4.;
-    double y_min = 0.;
-    double y_max = 4.;
-    double z_min = 0.;
-    double z_max = 4.;
-    double cw = 2.;
-    double cx = 2.;
-    double cy = 2.;
-    double cz = 2.;
+    double      w_min = 0.;
+    double      w_max = 4.;
+    double      x_min = 0.;
+    double      x_max = 4.;
+    double      y_min = 0.;
+    double      y_max = 4.;
+    double      z_min = 0.;
+    double      z_max = 4.;
+    double      cw    = 2.;
+    double      cx    = 2.;
+    double      cy    = 2.;
+    double      cz    = 2.;
     while (fin >> key >> value) {
       if (key == "path")
         path = value;
@@ -102,10 +103,10 @@ private:
       else if (key == "step")
         step = std::stoi(value);
     }
-    w = {w_min, w_max};
-    x = {x_min, x_max};
-    y = {y_min, y_max};
-    z = {z_min, z_max};
+    w      = {w_min, w_max};
+    x      = {x_min, x_max};
+    y      = {y_min, y_max};
+    z      = {z_min, z_max};
     center = {cw, cx, cy, cz};
   }
 };

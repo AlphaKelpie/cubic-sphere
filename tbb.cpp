@@ -2,8 +2,9 @@
     Check number of thread available and how limit works for tbb library
 */
 
-#include <iostream>
 #include <tbb/global_control.h>
+
+#include <iostream>
 
 int main() {
   auto n = tbb::global_control::active_value(
