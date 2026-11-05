@@ -38,30 +38,26 @@ class Grid4 {
   // density
   Function<Tf> _rho;
 
-  Tf _t;
-  Tf _h;
+  double _t;
+  double _h;
 
   // grid dimensions and origins (needed for index arithmetic in createProjection)
   int _wPoints;
   int _xPoints;
   int _yPoints;
   int _zPoints;
-  Tf _wMin;
-  Tf _xMin;
-  Tf _yMin;
-  Tf _zMin;
 
   // Used in std::for_each
   std::vector<int> _indices;
   std::vector<float> _diff;
 
   public:
-  Grid4(Interval<Tf> w = {0,10},
-    Interval<Tf> x = {0,10},
-    Interval<Tf> y = {0,10},
-    Interval<Tf> z = {0,10},
-    Tf T = 40.,
-    Tf h = 0.1);
+  Grid4(Interval<double> w = {0,10},
+    Interval<double> x = {0,10},
+    Interval<double> y = {0,10},
+    Interval<double> z = {0,10},
+    double T = 40.,
+    double h = 0.1);
   Grid4(std::string surfFile, std::string realFile, Tf T);
   ~Grid4();
 
@@ -75,17 +71,17 @@ class Grid4 {
   void saveSurface(std::string filename = "simulation");
   void saveRho(std::string filename = "simulation");
 
-  void evolve(Tf dt = 0);
-  void evolveCN(Tf dt = 0, int maxIter = 1000, Tf tol = 1e-3);
-  void evolveCNDiff(Tf dt = 0, int maxIter = 1000, Tf tol = 1e-3);
+  void evolve(double dt = 0);
+  void evolveCN(double dt = 0, int maxIter = 1000, Tf tol = 1e-3);
+  void evolveCNDiff(double dt = 0, int maxIter = 1000, Tf tol = 1e-3);
   void project();
 
   private:
   //create volume and neighbour: hypercube case
-  void createVolNeigh(Interval<Tf> w, Interval<Tf> x, Interval<Tf> y, Interval<Tf> z);
+  void createVolNeigh(Interval<double> w, Interval<double> x, Interval<double> y, Interval<double> z);
   
   //create volume: spherical crown case
-  void createVol(Interval<Tf> w, Interval<Tf> x, Interval<Tf> y, Interval<Tf> z);
+  void createVol(Interval<double> w, Interval<double> x, Interval<double> y, Interval<double> z);
   
   //create projection: hypercube case
   void createProjection();
@@ -97,10 +93,10 @@ class Grid4 {
   void createRho();
   
   //signed distance from the sphere
-  Tf phi(Tf w, Tf x, Tf y, Tf z);
+  double phi(double w, double x, double y, double z);
 
   //return the point on the surface which is closest to given point
-  Quaternion<Tf> closest(Quaternion<Tf> const& p);
+  Quaternion<double> closest(Quaternion<double> const& p);
 
   //load the map between each surface point 'p' and the interpolation(closest(neighbour(p))).
   //Returns false if file is not found.
@@ -113,15 +109,15 @@ class Grid4 {
   double der1(int pointIndex, int direction) const;
 
   //second derivative along the same direction
-  double der2(int pointIndex, int direction, Quaternion<Tf> const& pos = {-1., -1., -1., -1.}) const;
+  double der2(int pointIndex, int direction, Quaternion<double> const& pos = {-1., -1., -1., -1.}) const;
 
   //second mix derivative along two different directions
-  double derij(int pointIndex, int dir1, int dir2, Quaternion<Tf> const& pos = {-1., -1., -1., -1.}) const;
+  double derij(int pointIndex, int dir1, int dir2, Quaternion<double> const& pos = {-1., -1., -1., -1.}) const;
 
   // overloads operating on an arbitrary Function (used by evolveCN)
   double der1(int pointIndex, int direction, Function<Tf> const& f) const;
-  double der2(int pointIndex, int direction, Function<Tf> const& f, Quaternion<Tf> const& pos = {-1., -1., -1., -1.}) const;
-  double derij(int pointIndex, int dir1, int dir2, Function<Tf> const& f, Quaternion<Tf> const& pos = {-1., -1., -1., -1.}) const;
+  double der2(int pointIndex, int direction, Function<Tf> const& f, Quaternion<double> const& pos = {-1., -1., -1., -1.}) const;
+  double derij(int pointIndex, int dir1, int dir2, Function<Tf> const& f, Quaternion<double> const& pos = {-1., -1., -1., -1.}) const;
 };
 
 #endif

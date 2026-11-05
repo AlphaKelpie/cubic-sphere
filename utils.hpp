@@ -69,6 +69,21 @@ struct Quaternion
   Tf y = 0;
   Tf z = 0;
 
+  Quaternion(Tf ww = 0, Tf xx = 0, Tf yy = 0, Tf zz = 0) {
+    w = ww;
+    x = xx;
+    y = yy;
+    z = zz;
+  }
+
+  template<typename Tf1>
+  Quaternion(Quaternion<Tf1> src) {
+    w = (Tf)src.w;
+    x = (Tf)src.x;
+    y = (Tf)src.y;
+    z = (Tf)src.z;
+  }
+
   friend bool operator==(const Quaternion& lhs, const Quaternion& rhs) {
     if (std::abs(lhs.w-rhs.w) <= 1E-14 && std::abs(lhs.x-rhs.x) <= 1E-14 &&
       std::abs(lhs.y-rhs.y) <= 1E-14 && std::abs(lhs.z-rhs.z) <= 1E-14)

@@ -12,7 +12,7 @@
 #include <utility>
 
 template <typename Tf>
-Grid4<Tf>::Grid4(Interval<Tf> w, Interval<Tf> x, Interval<Tf> y, Interval<Tf> z, Tf T, Tf h)
+Grid4<Tf>::Grid4(Interval<double> w, Interval<double> x, Interval<double> y, Interval<double> z, double T, double h)
 	: _nPoints{0},
 		_projection{nullptr},
 		_neighbour{nullptr},
@@ -21,14 +21,10 @@ Grid4<Tf>::Grid4(Interval<Tf> w, Interval<Tf> x, Interval<Tf> y, Interval<Tf> z,
 		_wPoints{(int)std::round((w.max - w.min) / h) + 1},
 		_xPoints{(int)std::round((x.max - x.min) / h) + 1},
 		_yPoints{(int)std::round((y.max - y.min) / h) + 1},
-		_zPoints{(int)std::round((z.max - z.min) / h) + 1},
-		_wMin{w.min},
-		_xMin{x.min},
-		_yMin{y.min},
-		_zMin{z.min}
+		_zPoints{(int)std::round((z.max - z.min) / h) + 1}
 {
   
-  if (Params<Tf>::get().deltaC == 0.) {  //whole hypercube
+  if (Params::get().deltaC == 0.) {  //whole hypercube
     std::cout << "Whole hypercube model\n";
     createVolNeigh(w, x, y, z);
     _indices = std::vector<int>(_nPoints);
@@ -37,7 +33,7 @@ Grid4<Tf>::Grid4(Interval<Tf> w, Interval<Tf> x, Interval<Tf> y, Interval<Tf> z,
     createProjection();
   }
   else { //spheric crown
-    std::cout << "Spheric crown model: DeltaC = " << Params<Tf>::get().deltaC
+    std::cout << "Spheric crown model: DeltaC = " << Params::get().deltaC
               << std::endl;
     createVol(w, x, y, z);
     _indices = std::vector<int>(_nPoints);
@@ -52,8 +48,7 @@ template <typename Tf>
 Grid4<Tf>::Grid4(std::string surfFile, std::string relFile, Tf T)
 	: _nPoints{0},
     _t{T/6},
-    _wPoints{0}, _xPoints{0}, _yPoints{0}, _zPoints{0},
-    _wMin{0.}, _xMin{0.}, _yMin{0.}, _zMin{0.}
+    _wPoints{0}, _xPoints{0}, _yPoints{0}, _zPoints{0}
 {
   if (!loadSurface(surfFile)) {
 		throw std::runtime_error{"loadSurface() cannot open file."};
@@ -194,7 +189,7 @@ void Grid4<Tf>::saveRho(std::string filename) {
 }
 
 template <typename Tf>
-void Grid4<Tf>::evolve(Tf dt) {
+void Grid4<Tf>::evolve(double dt) {
   if (dt == 0) {
     dt = 0.1 * _h * _h * _h * _h;
   }
@@ -202,7 +197,7 @@ void Grid4<Tf>::evolve(Tf dt) {
   Function<Tf> nextRho(_nPoints);
 
   std::for_each(std::execution::par_unseq, _indices.begin(), _indices.end(), [&](int idx) {
-    Quaternion<Tf> const& p = _volume[idx];
+    Quaternion<double> const& p = _volume[idx];
 
     Tf deltaRho = _rho[idx] * (1 - 4)*4;
     for (int i = 0; i < 4; ++i) {
@@ -225,7 +220,7 @@ void Grid4<Tf>::evolve(Tf dt) {
 }
 
 template <typename Tf>
-void Grid4<Tf>::evolveCN(Tf dt, int maxIter, Tf tol) {
+void Grid4<Tf>::evolveCN(double dt, int maxIter, Tf tol) {
   if (dt == 0) {
     dt = 0.1 * _h * _h * _h * _h;
   }
@@ -235,7 +230,7 @@ void Grid4<Tf>::evolveCN(Tf dt, int maxIter, Tf tol) {
   // Explicit half-step: rhs = rho^n + alpha * L(rho^n)
   Function<Tf> rhs(_nPoints);
   std::for_each(std::execution::par_unseq, _indices.begin(), _indices.end(), [&](int idx) {
-    Quaternion<Tf> const& p = _volume[idx];
+    Quaternion<double> const p = _volume[idx];
     double Lrho = -(double)_rho[idx]*(1-4)*4; // from sum_i[D'_i rho * a(x)]
     for (int i = 0; i < 4; ++i) {
       Lrho -= der1(idx, i)*p[i]*(1-4);  // from D'_i rho * a(x)
@@ -258,7 +253,7 @@ void Grid4<Tf>::evolveCN(Tf dt, int maxIter, Tf tol) {
   for (int iter = 0; iter < maxIter; ++iter) {
 
     std::for_each(std::execution::par_unseq, _indices.begin(), _indices.end(), [&](int idx) {
-      Quaternion<Tf> const& p = _volume[idx];
+      Quaternion<double> const& p = _volume[idx];
       double Lrho = -(double)rhoA[idx]*(1-4)*4; // from sum_i[D'_i rho * a(x)]
       for (int i = 0; i < 4; ++i) {
         Lrho -= p[i]*(1-4)*der1(idx, i, rhoA);  // from D'_i rho * a(x)
@@ -286,12 +281,12 @@ void Grid4<Tf>::evolveCN(Tf dt, int maxIter, Tf tol) {
     std::fill(_diff.begin(), _diff.end(), 0.);
   }
 
-  if (Params<Tf>::get().deltaC == 0) rhoA[_centerPoint] = 0.;
+  if (Params::get().deltaC == 0) rhoA[_centerPoint] = 0.;
   _rho = std::move(rhoA);
 }
 
 template <typename Tf>
-void Grid4<Tf>::evolveCNDiff(Tf dt, int maxIter, Tf tol) {
+void Grid4<Tf>::evolveCNDiff(double dt, int maxIter, Tf tol) {
   if (dt == 0) {
     dt = 0.1 * _h * _h * _h * _h;
   }
@@ -357,7 +352,7 @@ void Grid4<Tf>::project() {
 
 
 template <typename Tf>
-void Grid4<Tf>::createVolNeigh(Interval<Tf> w, Interval<Tf> x, Interval<Tf> y, Interval<Tf> z) {
+void Grid4<Tf>::createVolNeigh(Interval<double> w, Interval<double> x, Interval<double> y, Interval<double> z) {
   std::cout << "Construct volume and neighbour...\n";
 
   _nPoints = _wPoints * _xPoints * _yPoints * _zPoints;
@@ -478,7 +473,7 @@ void Grid4<Tf>::createVolNeigh(Interval<Tf> w, Interval<Tf> x, Interval<Tf> y, I
 }
 
 template <typename Tf>
-void Grid4<Tf>::createVol(Interval<Tf> w, Interval<Tf> x, Interval<Tf> y, Interval<Tf> z) {
+void Grid4<Tf>::createVol(Interval<double> w, Interval<double> x, Interval<double> y, Interval<double> z) {
   std::cout << "Construct volume...\n";
   std::uint64_t cubicnPoints = static_cast<std::uint64_t>(_wPoints) * _xPoints * _yPoints * _zPoints;
   std::cout << "Hypercubic # of points: " << cubicnPoints << std::endl;
@@ -490,10 +485,10 @@ void Grid4<Tf>::createVol(Interval<Tf> w, Interval<Tf> x, Interval<Tf> y, Interv
 	//for every point of the descrete domain..
   std::uint64_t fullIndex = 0;
   std::uint64_t index = 0;
-  Tf m;
-  Tf i;
-  Tf j;
-  Tf k;
+  double m;
+  double i;
+  double j;
+  double k;
   for (short mi = 0; mi < _wPoints; ++mi) {
     m = w.min + _h * mi;
     for (short ii = 0; ii < _xPoints; ++ii) {
@@ -505,10 +500,10 @@ void Grid4<Tf>::createVol(Interval<Tf> w, Interval<Tf> x, Interval<Tf> y, Interv
           k = z.min + _h * ki;
           ++fullIndex;
 
-          if (std::abs(phi(m, i, j, k)) > Params<Tf>::get().deltaC) { continue; }
+          if (std::abs(phi(m, i, j, k)) > Params::get().deltaC) { continue; }
 
           //..add it to the volume
-          temp.push_back({m, i, j, k});
+          temp.push_back({static_cast<Tf>(m), static_cast<Tf>(i), static_cast<Tf>(j), static_cast<Tf>(k)});
           ++index;
         }
       }
@@ -551,17 +546,18 @@ void Grid4<Tf>::createProjection() {
   for (int i = 0; i < _nPoints; ++i) {
     std::cout << '\r' << i << '/' << _nPoints << std::flush;
 
-    Quaternion c = closest(_volume[i]);
+    Quaternion<double> c = _volume[i];
+    c = closest(c);
 
     // Convert c's coordinates to floating-point grid indices
     // Use round() to snap to the nearest integer — this is robust to the
     // accumulated floating-point error in c (which is a float computed from
     // operations on _h, itself not exactly representable in binary).
     // We take the floor manually: grid index of the lower-left corner.
-    Tf fw = (c.w - _wMin) / _h;
-    Tf fx = (c.x - _xMin) / _h;
-    Tf fy = (c.y - _yMin) / _h;
-    Tf fz = (c.z - _zMin) / _h;
+    double fw = c.w / _h;
+    double fx = c.x / _h;
+    double fy = c.y / _h;
+    double fz = c.z / _h;
 
     // Lower corner indices (clamp to valid range)
     int iw = std::clamp((int)std::floor(fw), 0, _wPoints - 2);
@@ -570,10 +566,10 @@ void Grid4<Tf>::createProjection() {
     int iz = std::clamp((int)std::floor(fz), 0, _zPoints - 2);
 
     // Interpolation fractions (distance from lower corner, in [0,1])
-    Tf wd = fw - (Tf)iw;
-    Tf xd = fx - (Tf)ix;
-    Tf yd = fy - (Tf)iy;
-    Tf zd = fz - (Tf)iz;
+    double wd = fw - (double)iw;
+    double xd = fx - (double)ix;
+    double yd = fy - (double)iy;
+    double zd = fz - (double)iz;
     if (wd > 1. || wd < 0.) {
       throw std::runtime_error("\nError: weight wd out of range [0, 1]");
     }
@@ -610,22 +606,22 @@ void Grid4<Tf>::createProjection() {
     _projection[i].first[15] = base + strideW + strideX + strideY + strideZ;
 
     // Trilinear interpolation weights
-    _projection[i].second[0]  = (1-wd) * (1-xd) * (1-yd) * (1-zd);
-    _projection[i].second[1]  = (1-wd) * (1-xd) * (1-yd) *    zd;
-    _projection[i].second[2]  = (1-wd) * (1-xd) *    yd  * (1-zd);
-    _projection[i].second[3]  = (1-wd) * (1-xd) *    yd  *    zd;
-    _projection[i].second[4]  = (1-wd) *    xd  * (1-yd) * (1-zd);
-    _projection[i].second[5]  = (1-wd) *    xd  * (1-yd) *    zd;
-    _projection[i].second[6]  = (1-wd) *    xd  *    yd  * (1-zd);
-    _projection[i].second[7]  = (1-wd) *    xd  *    yd  *    zd;
-    _projection[i].second[8]  =    wd  * (1-xd) * (1-yd) * (1-zd);
-    _projection[i].second[9]  =    wd  * (1-xd) * (1-yd) *    zd;
-    _projection[i].second[10] =    wd  * (1-xd) *    yd  * (1-zd);
-    _projection[i].second[11] =    wd  * (1-xd) *    yd  *    zd;
-    _projection[i].second[12] =    wd  *    xd  * (1-yd) * (1-zd);
-    _projection[i].second[13] =    wd  *    xd  * (1-yd) *    zd;
-    _projection[i].second[14] =    wd  *    xd  *    yd  * (1-zd);
-    _projection[i].second[15] =    wd  *    xd  *    yd  *    zd;
+    _projection[i].second[0]  = (Tf)(1-wd) * (1-xd) * (1-yd) * (1-zd);
+    _projection[i].second[1]  = (Tf)(1-wd) * (1-xd) * (1-yd) *    zd;
+    _projection[i].second[2]  = (Tf)(1-wd) * (1-xd) *    yd  * (1-zd);
+    _projection[i].second[3]  = (Tf)(1-wd) * (1-xd) *    yd  *    zd;
+    _projection[i].second[4]  = (Tf)(1-wd) *    xd  * (1-yd) * (1-zd);
+    _projection[i].second[5]  = (Tf)(1-wd) *    xd  * (1-yd) *    zd;
+    _projection[i].second[6]  = (Tf)(1-wd) *    xd  *    yd  * (1-zd);
+    _projection[i].second[7]  = (Tf)(1-wd) *    xd  *    yd  *    zd;
+    _projection[i].second[8]  = (Tf)   wd  * (1-xd) * (1-yd) * (1-zd);
+    _projection[i].second[9]  = (Tf)   wd  * (1-xd) * (1-yd) *    zd;
+    _projection[i].second[10] = (Tf)   wd  * (1-xd) *    yd  * (1-zd);
+    _projection[i].second[11] = (Tf)   wd  * (1-xd) *    yd  *    zd;
+    _projection[i].second[12] = (Tf)   wd  *    xd  * (1-yd) * (1-zd);
+    _projection[i].second[13] = (Tf)   wd  *    xd  * (1-yd) *    zd;
+    _projection[i].second[14] = (Tf)   wd  *    xd  *    yd  * (1-zd);
+    _projection[i].second[15] = (Tf)   wd  *    xd  *    yd  *    zd;
   }
 
   std::cout << "\tDone!\n";
@@ -648,13 +644,12 @@ void Grid4<Tf>::createMaps() {
 
 
   for (int i = 0; i < _nPoints; ++i) {  //for each quaternion..
-    std::cout << '\r' << i << '/' << _nPoints << std::flush;
 
     //current quaternion
-    Quaternion q = _volume[i];
+    Quaternion<double> q = _volume[i];
 
     //array of neighbours positions in the grid
-    Quaternion<Tf> n[32];
+    Quaternion<double> n[32];
     {
       n[0]  = {q.w - _h, q.x     , q.y     , q.z     };
       n[1]  = {q.w + _h, q.x     , q.y     , q.z     };
@@ -689,27 +684,28 @@ void Grid4<Tf>::createMaps() {
       n[30] = {q.w     , q.x     , q.y + _h, q.z - _h};
       n[31] = {q.w     , q.x     , q.y + _h, q.z + _h};
     }
+    for (uint16_t a = 0; a < 32; ++a) { std::cout << a << ": " << n[a] << std::endl;}
 
     //add current quat. index in _neighbour
     _neighbour[i].point[0] = i;
 
     //find the closest point on the hypersphere
-    Quaternion c = closest(q);
+    Quaternion<double> c = closest(q);
 
-    Tf w0 = std::floor(c.w / _h) * _h;
-    Tf x0 = std::floor(c.x / _h) * _h;
-    Tf y0 = std::floor(c.y / _h) * _h;
-    Tf z0 = std::floor(c.z / _h) * _h;
+    double w0 = std::floor(c.w / _h) * _h;
+    double x0 = std::floor(c.x / _h) * _h;
+    double y0 = std::floor(c.y / _h) * _h;
+    double z0 = std::floor(c.z / _h) * _h;
     //neg-left-front-down vertex projection quaternion coordinates
     Tf nlfd[4] = {(Tf)w0, (Tf)x0, (Tf)y0, (Tf)z0};
     //pos-right-behind-top vertex projection quaternion coordinates
     Tf prbt[4] = {(Tf)(w0 + _h), (Tf)(x0 + _h), (Tf)(y0 + _h), (Tf)(z0 + _h)};
 
     //weights
-    Tf wd = (c.w - w0) / _h;
-    Tf xd = (c.x - x0) / _h;
-    Tf yd = (c.y - y0) / _h;
-    Tf zd = (c.z - z0) / _h;
+    double wd = (c.w - w0) / _h;
+    double xd = (c.x - x0) / _h;
+    double yd = (c.y - y0) / _h;
+    double zd = (c.z - z0) / _h;
     if (wd > 1. || wd < 0.) {
       throw std::runtime_error("\nError: weight wd out of range [0, 1]: " + std::to_string(wd) + '\n');
     }
@@ -725,81 +721,183 @@ void Grid4<Tf>::createMaps() {
 
     //weights
     {
-      _projection[i].second[0]  = (1-wd) * (1-xd) * (1-yd) * (1-zd);
-      _projection[i].second[1]  = (1-wd) * (1-xd) * (1-yd) *    zd;
-      _projection[i].second[2]  = (1-wd) * (1-xd) *    yd  * (1-zd);
-      _projection[i].second[3]  = (1-wd) * (1-xd) *    yd  *    zd;
-      _projection[i].second[4]  = (1-wd) *    xd  * (1-yd) * (1-zd);
-      _projection[i].second[5]  = (1-wd) *    xd  * (1-yd) *    zd;
-      _projection[i].second[6]  = (1-wd) *    xd  *    yd  * (1-zd);
-      _projection[i].second[7]  = (1-wd) *    xd  *    yd  *    zd;
-      _projection[i].second[8]  =    wd  * (1-xd) * (1-yd) * (1-zd);
-      _projection[i].second[9]  =    wd  * (1-xd) * (1-yd) *    zd;
-      _projection[i].second[10] =    wd  * (1-xd) *    yd  * (1-zd);
-      _projection[i].second[11] =    wd  * (1-xd) *    yd  *    zd;
-      _projection[i].second[12] =    wd  *    xd  * (1-yd) * (1-zd);
-      _projection[i].second[13] =    wd  *    xd  * (1-yd) *    zd;
-      _projection[i].second[14] =    wd  *    xd  *    yd  * (1-zd);
-      _projection[i].second[15] =    wd  *    xd  *    yd  *    zd;
+      _projection[i].second[0]  = (Tf)(1-wd) * (1-xd) * (1-yd) * (1-zd);
+      _projection[i].second[1]  = (Tf)(1-wd) * (1-xd) * (1-yd) *    zd;
+      _projection[i].second[2]  = (Tf)(1-wd) * (1-xd) *    yd  * (1-zd);
+      _projection[i].second[3]  = (Tf)(1-wd) * (1-xd) *    yd  *    zd;
+      _projection[i].second[4]  = (Tf)(1-wd) *    xd  * (1-yd) * (1-zd);
+      _projection[i].second[5]  = (Tf)(1-wd) *    xd  * (1-yd) *    zd;
+      _projection[i].second[6]  = (Tf)(1-wd) *    xd  *    yd  * (1-zd);
+      _projection[i].second[7]  = (Tf)(1-wd) *    xd  *    yd  *    zd;
+      _projection[i].second[8]  = (Tf)   wd  * (1-xd) * (1-yd) * (1-zd);
+      _projection[i].second[9]  = (Tf)   wd  * (1-xd) * (1-yd) *    zd;
+      _projection[i].second[10] = (Tf)   wd  * (1-xd) *    yd  * (1-zd);
+      _projection[i].second[11] = (Tf)   wd  * (1-xd) *    yd  *    zd;
+      _projection[i].second[12] = (Tf)   wd  *    xd  * (1-yd) * (1-zd);
+      _projection[i].second[13] = (Tf)   wd  *    xd  * (1-yd) *    zd;
+      _projection[i].second[14] = (Tf)   wd  *    xd  *    yd  * (1-zd);
+      _projection[i].second[15] = (Tf)   wd  *    xd  *    yd  *    zd;
     }
 
     //search for neighbours and projection quaternion indexes on the nlfd
     //and prbt vertices
     Tf const query[4] = {(Tf)q[0], (Tf)q[1], (Tf)q[2], (Tf)q[3]};
     std::vector<nanoflann::ResultItem<uint32_t, Tf>> ret_matches;
-    tree.radiusSearch(&query[0], search_radius, ret_matches);
-    std::for_each(std::execution::par_unseq, ret_matches.begin(), ret_matches.end(),
-                  [&](auto result) {
-      Quaternion<Tf> const r = _volume[result.first];
+    uint32_t rs = tree.radiusSearch(&query[0], search_radius, ret_matches);
+    std::cout << query[0] << ' ' << query[1] << ' ' << query[2] << ' ' << query[3] << ' ' << rs << std::endl;
+    /* std::for_each(std::execution::par_unseq, ret_matches.begin(), ret_matches.end(),
+                  [&](auto result)  */
+    for (auto const& result : ret_matches) {
+      Quaternion<double> const r = _volume[result.first];
+      std::cout << r << std::endl;
 
       //neighbours
-           if (r == n[0] ) _neighbour[i].point[1]  = result.first;
-      else if (r == n[1] ) _neighbour[i].point[2]  = result.first;
-      else if (r == n[2] ) _neighbour[i].point[3]  = result.first;
-      else if (r == n[3] ) _neighbour[i].point[4]  = result.first;
-      else if (r == n[4] ) _neighbour[i].point[5]  = result.first;
-      else if (r == n[5] ) _neighbour[i].point[6]  = result.first;
-      else if (r == n[6] ) _neighbour[i].point[7]  = result.first;
-      else if (r == n[7] ) _neighbour[i].point[8]  = result.first;
-      else if (r == n[8] ) _neighbour[i].point[9]  = result.first;
-      else if (r == n[9] ) _neighbour[i].point[10] = result.first;
-      else if (r == n[10]) _neighbour[i].point[11] = result.first;
-      else if (r == n[11]) _neighbour[i].point[12] = result.first;
-      else if (r == n[12]) _neighbour[i].point[13] = result.first;
-      else if (r == n[13]) _neighbour[i].point[14] = result.first;
-      else if (r == n[14]) _neighbour[i].point[15] = result.first;
-      else if (r == n[15]) _neighbour[i].point[16] = result.first;
-      else if (r == n[16]) _neighbour[i].point[17] = result.first;
-      else if (r == n[17]) _neighbour[i].point[18] = result.first;
-      else if (r == n[18]) _neighbour[i].point[19] = result.first;
-      else if (r == n[19]) _neighbour[i].point[20] = result.first;
-      else if (r == n[20]) _neighbour[i].point[21] = result.first;
-      else if (r == n[21]) _neighbour[i].point[22] = result.first;
-      else if (r == n[22]) _neighbour[i].point[23] = result.first;
-      else if (r == n[23]) _neighbour[i].point[24] = result.first;
-      else if (r == n[24]) _neighbour[i].point[25] = result.first;
-      else if (r == n[25]) _neighbour[i].point[26] = result.first;
-      else if (r == n[26]) _neighbour[i].point[27] = result.first;
-      else if (r == n[27]) _neighbour[i].point[28] = result.first;
-      else if (r == n[28]) _neighbour[i].point[29] = result.first;
-      else if (r == n[29]) _neighbour[i].point[30] = result.first;
-      else if (r == n[30]) _neighbour[i].point[31] = result.first;
-      else if (r == n[31]) _neighbour[i].point[32] = result.first;
-    });
+           if (r == n[0] ) {
+            _neighbour[i].point[1]  = result.first;
+            std::cout << "0\n";
+           }
+      else if (r == n[1] ) {
+        _neighbour[i].point[2]  = result.first;
+        std::cout << "1\n";
+      }
+      else if (r == n[2] ) {
+        _neighbour[i].point[3]  = result.first;
+        std::cout << "2\n";
+      }
+      else if (r == n[3] ) {
+        _neighbour[i].point[4]  = result.first;
+        std::cout << "3\n";
+      }
+      else if (r == n[4] ) {
+        _neighbour[i].point[5]  = result.first;
+        std::cout << "4\n";
+      }
+      else if (r == n[5] ) {
+        _neighbour[i].point[6]  = result.first;
+        std::cout << "5\n";
+      }
+      else if (r == n[6] ) {
+        _neighbour[i].point[7]  = result.first;
+        std::cout << "6\n";
+      }
+      else if (r == n[7] ) {
+        _neighbour[i].point[8]  = result.first;
+        std::cout << "7\n";
+      }
+      else if (r == n[8] ) {
+        _neighbour[i].point[9]  = result.first;
+        std::cout << "8\n";
+      }
+      else if (r == n[9] ) {
+        _neighbour[i].point[10] = result.first;
+        std::cout << "9\n";
+      }
+      else if (r == n[10]) {
+        _neighbour[i].point[11] = result.first;
+        std::cout << "10\n";
+      }
+      else if (r == n[11]) {
+        _neighbour[i].point[12] = result.first;
+        std::cout << "11\n";
+      }
+      else if (r == n[12]) {
+        _neighbour[i].point[13] = result.first;
+        std::cout << "12\n";
+      }
+      else if (r == n[13]) {
+        _neighbour[i].point[14] = result.first;
+        std::cout << "13\n";
+      }
+      else if (r == n[14]) {
+        _neighbour[i].point[15] = result.first;
+        std::cout << "14\n";
+      }
+      else if (r == n[15]) {
+        _neighbour[i].point[16] = result.first;
+        std::cout << "15\n";
+      }
+      else if (r == n[16]) {
+        _neighbour[i].point[17] = result.first;
+        std::cout << "16\n";
+      }
+      else if (r == n[17]) {
+        _neighbour[i].point[18] = result.first;
+        std::cout << "17\n";
+      }
+      else if (r == n[18]) {
+        _neighbour[i].point[19] = result.first;
+        std::cout << "18\n";
+      }
+      else if (r == n[19]) {
+        _neighbour[i].point[20] = result.first;
+        std::cout << "19\n";
+      }
+      else if (r == n[20]) {
+        _neighbour[i].point[21] = result.first;
+        std::cout << "20\n";
+      }
+      else if (r == n[21]) {
+        _neighbour[i].point[22] = result.first;
+        std::cout << "21\n";
+      }
+      else if (r == n[22]) {
+        _neighbour[i].point[23] = result.first;
+        std::cout << "22\n";
+      }
+      else if (r == n[23]) {
+        _neighbour[i].point[24] = result.first;
+        std::cout << "23\n";
+      }
+      else if (r == n[24]) {
+        _neighbour[i].point[25] = result.first;
+        std::cout << "24\n";
+      }
+      else if (r == n[25]) {
+        _neighbour[i].point[26] = result.first;
+        std::cout << "25\n";
+      }
+      else if (r == n[26]) {
+        _neighbour[i].point[27] = result.first;
+        std::cout << "26\n";
+      }
+      else if (r == n[27]) {
+        _neighbour[i].point[28] = result.first;
+        std::cout << "27\n";
+      }
+      else if (r == n[28]) {
+        _neighbour[i].point[29] = result.first;
+        std::cout << "28\n";
+      }
+      else if (r == n[29]) {
+        _neighbour[i].point[30] = result.first;
+        std::cout << "29\n";
+      }
+      else if (r == n[30]) {
+        _neighbour[i].point[31] = result.first;
+        std::cout << "30\n";
+      }
+      else if (r == n[31]) {
+        _neighbour[i].point[32] = result.first;
+        std::cout << "31\n";
+      }
+    }/* ); */
 
     //nlfd and prbt _volume points
     std::vector<uint32_t> ret_index(1);
     std::vector<Tf> out_dist_sqr(1);
-    tree.knnSearch(&nlfd[0], 1, &ret_index[0], &out_dist_sqr[0]);
+    int r1 = tree.knnSearch(&nlfd[0], 1, &ret_index[0], &out_dist_sqr[0]);
     if (out_dist_sqr[0] > _h / 100) {
       throw std::runtime_error("Error: too far nldf point found");
     }
     _projection[i].first[0] = ret_index[0];
-    tree.knnSearch(&prbt[0], 1, &ret_index[0], &out_dist_sqr[0]);
+    
+    int r2 = tree.knnSearch(&prbt[0], 1, &ret_index[0], &out_dist_sqr[0]);
     if (out_dist_sqr[0] > _h / 100) {
       throw std::runtime_error("Error: too far prbt point found");
     }
     _projection[i].first[15] = ret_index[0];
+    exit(1);
+    std::cout << '\r' << i << '/' << _nPoints << ' ' << rs << ' ' << r1 << ' ' << r2 << std::flush;
   }
 
   std::cout << '\n';
@@ -842,21 +940,21 @@ void Grid4<Tf>::createRho() {
 }
 
 template <typename Tf>
-Tf Grid4<Tf>::phi(Tf w, Tf x, Tf y, Tf z) {
-  Quaternion<Tf>& c = Params<Tf>::get().center;
+double Grid4<Tf>::phi(double w, double x, double y, double z) {
+  Quaternion<double>& c = Params::get().center;
   return std::sqrt(
       (w-c.w)*(w-c.w) + (x-c.x)*(x-c.x) + (y-c.y)*(y-c.y) + (z-c.z)*(z-c.z)
-    ) - Params<Tf>::get().radius;
+    ) - Params::get().radius;
 }
 
 template <typename Tf>
-Quaternion<Tf> Grid4<Tf>::closest(Quaternion<Tf> const& p) {
-  Tf w = p.w;
-  Tf x = p.x;
-  Tf y = p.y;
-  Tf z = p.z;
+Quaternion<double> Grid4<Tf>::closest(Quaternion<double> const& p) {
+  double w = p.w;
+  double x = p.x;
+  double y = p.y;
+  double z = p.z;
 
-  Tf gradient[4];   //nabla_h (phi)
+  double gradient[4];   //nabla_h (phi)
   gradient[0] = (phi(w+_h, x,    y,    z   ) - phi(w-_h, x,    y,    z   )) /(2*_h);
   gradient[1] = (phi(w,    x+_h, y   , z   ) - phi(w,    x-_h, y,    z   )) /(2*_h);
   gradient[2] = (phi(w,    x,    y+_h, z   ) - phi(w,    x,    y-_h, z   )) /(2*_h);
@@ -868,12 +966,12 @@ Quaternion<Tf> Grid4<Tf>::closest(Quaternion<Tf> const& p) {
   }
 
   // | nabla_h (phi) |
-  Tf mod = std::sqrt(gradient[0]*gradient[0] + gradient[1]*gradient[1] +
+  double mod = std::sqrt(gradient[0]*gradient[0] + gradient[1]*gradient[1] +
     gradient[2]*gradient[2] + gradient[3]*gradient[3]);
 
-  Tf dist_wxyz = phi(w,x,y,z);
+  double dist_wxyz = phi(w,x,y,z);
 
-  Quaternion<Tf> r;
+  Quaternion<double> r;
   r.w = w - gradient[0] * dist_wxyz / mod;
   r.x = x - gradient[1] * dist_wxyz / mod;
   r.y = y - gradient[2] * dist_wxyz / mod;
@@ -1002,12 +1100,12 @@ double Grid4<Tf>::der1(int pointIndex, int direction) const {
 }
 
 template <typename Tf>
-double Grid4<Tf>::der2(int pointIndex, int direction, Quaternion<Tf> const& pos) const {
+double Grid4<Tf>::der2(int pointIndex, int direction, Quaternion<double> const& pos) const {
   return der2(pointIndex, direction, _rho, pos);
 }
 
 template <typename Tf>
-double Grid4<Tf>::derij(int pointIndex, int dir1, int dir2, Quaternion<Tf> const& pos) const {
+double Grid4<Tf>::derij(int pointIndex, int dir1, int dir2, Quaternion<double> const& pos) const {
   return derij(pointIndex, dir1, dir2, _rho, pos);
 }
 
@@ -1041,11 +1139,11 @@ double Grid4<Tf>::der1(int pointIndex, int direction, Function<Tf> const& f) con
 }
 
 template <typename Tf>
-double Grid4<Tf>::der2(int pointIndex, int direction, Function<Tf> const& f, Quaternion<Tf> const& pos) const {
+double Grid4<Tf>::der2(int pointIndex, int direction, Function<Tf> const& f, Quaternion<double> const& pos) const {
   Neighbours& near = _neighbour[pointIndex];
 
   double result = 0.;
-  int const exp = (pos == Quaternion<Tf>{-1., -1., -1., -1.}) ? 0 : 1;
+  int const exp = (pos == Quaternion<double>{-1., -1., -1., -1.}) ? 0 : 1;
 
   switch (direction + 1)
   { // no problem about D+/-(1/2) because D constant over direction
@@ -1075,11 +1173,11 @@ double Grid4<Tf>::der2(int pointIndex, int direction, Function<Tf> const& f, Qua
 }
 
 template <typename Tf>
-double Grid4<Tf>::derij(int pointIndex, int dir1, int dir2, Function<Tf> const& f, Quaternion<Tf> const& pos) const {
+double Grid4<Tf>::derij(int pointIndex, int dir1, int dir2, Function<Tf> const& f, Quaternion<double> const& pos) const {
   Neighbours near = _neighbour[pointIndex];
 
   double result = 0.;
-  int exp = (pos == Quaternion<Tf>{-1., -1., -1., -1.}) ? 0 : 1;
+  int exp = (pos == Quaternion<double>{-1., -1., -1., -1.}) ? 0 : 1;
 
   switch ((dir1 + 1) * (dir2 + 1))
   {
