@@ -744,163 +744,45 @@ void Grid4<Tf>::createMaps() {
     Tf const query[4] = {(Tf)q[0], (Tf)q[1], (Tf)q[2], (Tf)q[3]};
     std::vector<nanoflann::ResultItem<uint32_t, Tf>> ret_matches;
     uint32_t rs = tree.radiusSearch(&query[0], search_radius, ret_matches);
-    std::cout << query[0] << ' ' << query[1] << ' ' << query[2] << ' ' << query[3] << ' ' << rs << std::endl;
-    /* std::for_each(std::execution::par_unseq, ret_matches.begin(), ret_matches.end(),
-                  [&](auto result)  */
-    for (auto const& result : ret_matches) {
-      Quaternion<double> const r = _volume[result.first];
-      std::cout << r << std::endl;
-
-      //neighbours
-           if (r == n[0] ) {
-            _neighbour[i].point[1]  = result.first;
-            std::cout << "0\n";
-           }
-      else if (r == n[1] ) {
-        _neighbour[i].point[2]  = result.first;
-        std::cout << "1\n";
+    if (rs == 0) {
+      throw std::runtime_error("Error: radiusSearch didn't find neighbours");
+    }
+    std::for_each(std::execution::par_unseq, ret_matches.begin(), ret_matches.end(),
+                  [&](auto result) {
+    Quaternion<Tf> const r = _volume[result.first];
+    int const dw = (int)std::lround((r.w - q_Tf.w) / _h);
+    int const dx = (int)std::lround((r.x - q_Tf.x) / _h);
+    int const dy = (int)std::lround((r.y - q_Tf.y) / _h);
+    int const dz = (int)std::lround((r.z - q_Tf.z) / _h);
+    for (int k = 0; k < 32; ++k) {
+      if (dw == (int)std::lround((n[k].w - q_Tf.w) / _h) &&
+          dx == (int)std::lround((n[k].x - q_Tf.x) / _h) &&
+          dy == (int)std::lround((n[k].y - q_Tf.y) / _h) &&
+          dz == (int)std::lround((n[k].z - q_Tf.z) / _h)) {
+        _neighbour[i].point[k + 1] = result.first;
+        break;
       }
-      else if (r == n[2] ) {
-        _neighbour[i].point[3]  = result.first;
-        std::cout << "2\n";
-      }
-      else if (r == n[3] ) {
-        _neighbour[i].point[4]  = result.first;
-        std::cout << "3\n";
-      }
-      else if (r == n[4] ) {
-        _neighbour[i].point[5]  = result.first;
-        std::cout << "4\n";
-      }
-      else if (r == n[5] ) {
-        _neighbour[i].point[6]  = result.first;
-        std::cout << "5\n";
-      }
-      else if (r == n[6] ) {
-        _neighbour[i].point[7]  = result.first;
-        std::cout << "6\n";
-      }
-      else if (r == n[7] ) {
-        _neighbour[i].point[8]  = result.first;
-        std::cout << "7\n";
-      }
-      else if (r == n[8] ) {
-        _neighbour[i].point[9]  = result.first;
-        std::cout << "8\n";
-      }
-      else if (r == n[9] ) {
-        _neighbour[i].point[10] = result.first;
-        std::cout << "9\n";
-      }
-      else if (r == n[10]) {
-        _neighbour[i].point[11] = result.first;
-        std::cout << "10\n";
-      }
-      else if (r == n[11]) {
-        _neighbour[i].point[12] = result.first;
-        std::cout << "11\n";
-      }
-      else if (r == n[12]) {
-        _neighbour[i].point[13] = result.first;
-        std::cout << "12\n";
-      }
-      else if (r == n[13]) {
-        _neighbour[i].point[14] = result.first;
-        std::cout << "13\n";
-      }
-      else if (r == n[14]) {
-        _neighbour[i].point[15] = result.first;
-        std::cout << "14\n";
-      }
-      else if (r == n[15]) {
-        _neighbour[i].point[16] = result.first;
-        std::cout << "15\n";
-      }
-      else if (r == n[16]) {
-        _neighbour[i].point[17] = result.first;
-        std::cout << "16\n";
-      }
-      else if (r == n[17]) {
-        _neighbour[i].point[18] = result.first;
-        std::cout << "17\n";
-      }
-      else if (r == n[18]) {
-        _neighbour[i].point[19] = result.first;
-        std::cout << "18\n";
-      }
-      else if (r == n[19]) {
-        _neighbour[i].point[20] = result.first;
-        std::cout << "19\n";
-      }
-      else if (r == n[20]) {
-        _neighbour[i].point[21] = result.first;
-        std::cout << "20\n";
-      }
-      else if (r == n[21]) {
-        _neighbour[i].point[22] = result.first;
-        std::cout << "21\n";
-      }
-      else if (r == n[22]) {
-        _neighbour[i].point[23] = result.first;
-        std::cout << "22\n";
-      }
-      else if (r == n[23]) {
-        _neighbour[i].point[24] = result.first;
-        std::cout << "23\n";
-      }
-      else if (r == n[24]) {
-        _neighbour[i].point[25] = result.first;
-        std::cout << "24\n";
-      }
-      else if (r == n[25]) {
-        _neighbour[i].point[26] = result.first;
-        std::cout << "25\n";
-      }
-      else if (r == n[26]) {
-        _neighbour[i].point[27] = result.first;
-        std::cout << "26\n";
-      }
-      else if (r == n[27]) {
-        _neighbour[i].point[28] = result.first;
-        std::cout << "27\n";
-      }
-      else if (r == n[28]) {
-        _neighbour[i].point[29] = result.first;
-        std::cout << "28\n";
-      }
-      else if (r == n[29]) {
-        _neighbour[i].point[30] = result.first;
-        std::cout << "29\n";
-      }
-      else if (r == n[30]) {
-        _neighbour[i].point[31] = result.first;
-        std::cout << "30\n";
-      }
-      else if (r == n[31]) {
-        _neighbour[i].point[32] = result.first;
-        std::cout << "31\n";
-      }
-    }/* ); */
+    }
+  });
 
     //nlfd and prbt _volume points
     std::vector<uint32_t> ret_index(1);
     std::vector<Tf> out_dist_sqr(1);
-    int r1 = tree.knnSearch(&nlfd[0], 1, &ret_index[0], &out_dist_sqr[0]);
-    if (out_dist_sqr[0] > _h / 100) {
-      throw std::runtime_error("Error: too far nldf point found");
+    uint16_t r1 = tree.knnSearch(&nlfd[0], 1, &ret_index[0], &out_dist_sqr[0]);
+    if ((r1 != 1) || (out_dist_sqr[0] > (_h / 100)*(_h / 100))) {
+      throw std::runtime_error("Error: not univoc or too far nldf point found");
     }
     _projection[i].first[0] = ret_index[0];
     
-    int r2 = tree.knnSearch(&prbt[0], 1, &ret_index[0], &out_dist_sqr[0]);
-    if (out_dist_sqr[0] > _h / 100) {
-      throw std::runtime_error("Error: too far prbt point found");
+    uint16_t r2 = tree.knnSearch(&prbt[0], 1, &ret_index[0], &out_dist_sqr[0]);
+    if ((r2 != 1) || (out_dist_sqr[0] > (_h / 100)*(_h / 100))) {
+      throw std::runtime_error("Error: not univoc or too far prbt point found");
     }
     _projection[i].first[15] = ret_index[0];
-    exit(1);
-    std::cout << '\r' << i << '/' << _nPoints << ' ' << rs << ' ' << r1 << ' ' << r2 << std::flush;
+    std::cout << '\r' << i << '/' << _nPoints << std::flush;
   }
 
-  std::cout << '\n';
+  std::cout << "\nprojections...";
 
   //for each quaternion find the projections via nlfd and prbt vertices
   std::for_each(std::execution::par_unseq, _indices.begin(), _indices.end(),
