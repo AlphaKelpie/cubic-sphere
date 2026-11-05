@@ -1,30 +1,23 @@
-#include "params.hpp"
 #include "grid4.h"
+#include "params.hpp"
 
 #include <format>
 #include <iostream>
 #include <string>
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   if (argc == 2) {
     Params::load(argv[1]);
   } else {
     Params::load("params.dat");
   }
 
-  try
-  {
+  try {
     std::string const path = Params::get().path;
     {
       std::cout << "Creating\n";
-      Grid4 g(
-        Params::get().w,
-        Params::get().x,
-        Params::get().y,
-        Params::get().z,
-        Params::get().T,
-        Params::get().h
-      );
+      Grid4<double> g(Params::get().w, Params::get().x, Params::get().y,
+              Params::get().z, Params::get().T, Params::get().h);
       g.fillIdxRho();
 
       std::cout << "Saving\n";
@@ -39,7 +32,7 @@ int main(int argc, char* argv[]) {
 
       std::cout << "Evolving\n";
       for (int step = Params::get().step; step < Params::get().total;
-          step+=Params::get().step) {
+           step += Params::get().step) {
         std::cout << "Step " << step << ": " << std::flush;
         for (int sim = 0; sim < Params::get().step; ++sim) {
           g.evolveCNDiff();
@@ -54,9 +47,7 @@ int main(int argc, char* argv[]) {
 
     std::cout << "End\n";
     return 0;
-  }
-  catch(const std::exception& e)
-  {
+  } catch (const std::exception &e) {
     std::cerr << e.what() << '\n';
     return 1;
   }

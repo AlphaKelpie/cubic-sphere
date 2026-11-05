@@ -1,5 +1,5 @@
-#include "params.hpp"
 #include "grid4.h"
+#include "params.hpp"
 
 #include <chrono>
 #include <filesystem>
@@ -10,11 +10,11 @@
 
 typedef float Tf;
 
-void evolving(Grid4<Tf>& g, std::string const& path) {
+void evolving(Grid4<Tf> &g, std::string const &path) {
   const double deltaT = Params::get().deltaT;
   std::cout << "\n\033[1;34mEvolving with deltaT = " << deltaT << "\033[0m\n";
   for (int step = Params::get().step; step < Params::get().total;
-      step+=Params::get().step) {
+       step += Params::get().step) {
     std::cout << "Step " << step << ": " << std::flush;
     auto t0 = std::chrono::steady_clock::now();
     for (int sim = 0; sim < Params::get().step; ++sim) {
@@ -32,10 +32,12 @@ void evolving(Grid4<Tf>& g, std::string const& path) {
   std::cout << "\033[1;32mEnd\033[0m\n";
 }
 
-int main(int argc, char* argv[]) {
-  auto n = tbb::global_control::active_value(tbb::global_control::max_allowed_parallelism);
+int main(int argc, char *argv[]) {
+  auto n = tbb::global_control::active_value(
+      tbb::global_control::max_allowed_parallelism);
   int const max_thread = (n > 64) ? n - 20 : n - 2;
-  tbb::global_control limit(tbb::global_control::max_allowed_parallelism, max_thread);
+  tbb::global_control limit(tbb::global_control::max_allowed_parallelism,
+                            max_thread);
 
   if (argc == 2) {
     std::cout << "\033[1;36mParams from " << argv[1] << "\033[0m\n";
@@ -45,19 +47,13 @@ int main(int argc, char* argv[]) {
     Params::load("params.dat");
   }
 
-  try
-  {
+  try {
     std::string const path = Params::get().path;
-    if (!std::filesystem::exists(std::filesystem::path{Params::get().pathdata + "_s.dat"})) {
+    if (!std::filesystem::exists(
+            std::filesystem::path{Params::get().pathdata + "_s.dat"})) {
       std::cout << "\033[35mCreating\033[0m\n";
-      Grid4<Tf> g(
-        Params::get().w,
-        Params::get().x,
-        Params::get().y,
-        Params::get().z,
-        Params::get().T,
-        Params::get().h
-      );
+      Grid4<Tf> g(Params::get().w, Params::get().x, Params::get().y,
+                  Params::get().z, Params::get().T, Params::get().h);
       g.fillFirstRho();
 
       std::cout << "\033[35mSaving\033[0m\n";
@@ -68,7 +64,7 @@ int main(int argc, char* argv[]) {
 
       evolving(g, path);
     }
-    
+
     else {
       std::string const pathdata = Params::get().pathdata;
       std::cout << "\033[35mLoading " << pathdata << "\033[0m\n";
@@ -81,8 +77,7 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-  catch(const std::exception& e)
-  {
+  catch (const std::exception &e) {
     std::cerr << "\033[31m" << e.what() << "\033[0m\n";
     return 1;
   }

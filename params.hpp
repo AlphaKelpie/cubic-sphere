@@ -7,7 +7,7 @@
 #include <string>
 
 class Params {
-  public:
+public:
   // Parameters
   std::string path;
   std::string pathdata;
@@ -25,20 +25,19 @@ class Params {
   int step{100};
 
   // Global istance access
-  static Params& get() {
+  static Params &get() {
     if (!_instance) {
-      throw std::runtime_error("Params not initialized! Call Params::load() first.");
+      throw std::runtime_error(
+          "Params not initialized! Call Params::load() first.");
     }
     return *_instance;
   }
 
   // Load file and create istance
-  static void load(std::string filename) {
-    _instance = new Params(filename);
-  }
+  static void load(std::string filename) { _instance = new Params(filename); }
 
-  private:
-  inline static Params* _instance = nullptr;
+private:
+  inline static Params *_instance = nullptr;
 
   Params(std::string filename) {
     std::fstream fin(filename, std::ios::in);
@@ -60,27 +59,48 @@ class Params {
     double cy = 2.;
     double cz = 2.;
     while (fin >> key >> value) {
-      if (key == "path") path = value;
-      else if (key == "pathdata") pathdata = value;
-      else if (key == "T") T = std::stof(value);
-      else if (key == "h") h = std::stof(value);
-      else if (key == "deltaT") deltaT = std::stof(value);
-      else if (key == "deltaC") deltaC = std::stof(value);
-      else if (key == "w_min") w_min = std::stof(value);
-      else if (key == "w_max") w_max = std::stof(value);
-      else if (key == "x_min") x_min = std::stof(value);
-      else if (key == "x_max") x_max = std::stof(value);
-      else if (key == "y_min") y_min = std::stof(value);
-      else if (key == "y_max") y_max = std::stof(value);
-      else if (key == "z_min") z_min = std::stof(value);
-      else if (key == "z_max") z_max = std::stof(value);
-      else if (key == "radius") radius = std::stof(value);
-      else if (key == "cw") cw = std::stof(value);
-      else if (key == "cx") cx = std::stof(value);
-      else if (key == "cy") cy = std::stof(value);
-      else if (key == "cz") cz = std::stof(value);
-      else if (key == "total") total = std::stoi(value) + 2;
-      else if (key == "step") step = std::stoi(value);
+      if (key == "path")
+        path = value;
+      else if (key == "pathdata")
+        pathdata = value;
+      else if (key == "T")
+        T = std::stof(value);
+      else if (key == "h")
+        h = std::stof(value);
+      else if (key == "deltaT")
+        deltaT = std::stof(value);
+      else if (key == "deltaC")
+        deltaC = std::stof(value);
+      else if (key == "w_min")
+        w_min = std::stof(value);
+      else if (key == "w_max")
+        w_max = std::stof(value);
+      else if (key == "x_min")
+        x_min = std::stof(value);
+      else if (key == "x_max")
+        x_max = std::stof(value);
+      else if (key == "y_min")
+        y_min = std::stof(value);
+      else if (key == "y_max")
+        y_max = std::stof(value);
+      else if (key == "z_min")
+        z_min = std::stof(value);
+      else if (key == "z_max")
+        z_max = std::stof(value);
+      else if (key == "radius")
+        radius = std::stof(value);
+      else if (key == "cw")
+        cw = std::stof(value);
+      else if (key == "cx")
+        cx = std::stof(value);
+      else if (key == "cy")
+        cy = std::stof(value);
+      else if (key == "cz")
+        cz = std::stof(value);
+      else if (key == "total")
+        total = std::stoi(value) + 2;
+      else if (key == "step")
+        step = std::stoi(value);
     }
     w = {w_min, w_max};
     x = {x_min, x_max};
