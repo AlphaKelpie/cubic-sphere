@@ -40,7 +40,7 @@ Grid4<Tf>::Grid4(Interval<double> w, Interval<double> x, Interval<double> y,
 }
 
 template <typename Tf>
-Grid4<Tf>::Grid4(std::string surfFile, std::string relFile, Tf T)
+Grid4<Tf>::Grid4(std::string surfFile, std::string relFile, double T)
     : _nPoints{0}, _t{T / 6}, _wPoints{0}, _xPoints{0}, _yPoints{0},
       _zPoints{0} {
   if (!loadSurface(surfFile)) {
@@ -184,7 +184,7 @@ template <typename Tf> void Grid4<Tf>::evolve(double dt) {
                 [&](int idx) {
                   Quaternion<double> const &p = _volume[idx];
 
-                  Tf deltaRho = _rho[idx] * (1 - 4) * 4;
+                  double deltaRho = (double)_rho[idx] * (1 - 4) * 4;
                   for (int i = 0; i < 4; ++i) {
                     deltaRho -= p[i] * (1 - 4) * der1(idx, i);
                     for (int j = 0; j < 4; ++j) {

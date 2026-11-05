@@ -55,7 +55,7 @@ public:
   Grid4(Interval<double> w = {0, 10}, Interval<double> x = {0, 10},
         Interval<double> y = {0, 10}, Interval<double> z = {0, 10},
         double T = 40., double h = 0.1);
-  Grid4(std::string surfFile, std::string realFile, Tf T);
+  Grid4(std::string surfFile, std::string realFile, double T);
   ~Grid4();
 
   // set the first values of _rho
