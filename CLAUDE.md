@@ -64,6 +64,14 @@ Defaults: simulation name `test4_1`, data path `../data`.
 - **`mainGrid.cpp`** — same for the 3D sphere variant.
 - **`diffusion.cpp`** — standalone simple-diffusion simulation using `evolveCNDiff()`.
 
+## JAX/GPU port (`cubicsphere/`, branch `gpu`)
+
+Python package reproducing `mainGrid4.cpp` with the same params file: `python -m cubicsphere params.dat`.
+Fields live in dense 8^4 bricks (no `_n`/`_p` tables). Defaults differ from the C++ on purpose
+(centred coordinates, Jacobi solver, relative tolerance); `--raw-coords --solver fixed-point --atol 1e-3 --rtol 0
+--center-sink on --on-fail continue --format text` reproduces the C++. `python -m cubicsphere.validate PARAMS data/<set>`
+checks against C++ data files. See `cubicsphere/README.md`.
+
 ## Branches
 
 - `main` — 3D sphere simulation (Grid3).

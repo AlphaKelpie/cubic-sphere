@@ -1,0 +1,12 @@
+[project]
+name = "cubicsphere"
+version = "0.1.0"
+description = "JAX/GPU port of the 4D Crank-Nicolson Fokker-Planck simulation on S^3 (mainGrid4.cpp)"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "jax>=0.4.30"]
+
+[project.optional-dependencies]
+cuda = ["jax[cuda12]>=0.4.30"]
+
+[tool.setuptools]
+packages = ["cubicsphere"]
