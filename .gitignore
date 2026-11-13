@@ -3,3 +3,6 @@ a.exe
 utils.hpp.gch
 *.out
 *.o
+.venv/
+cubicsphere.egg-info/
+cubicsphere/__pycache__/
