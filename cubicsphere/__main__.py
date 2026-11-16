@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shutil
 import sys
 import time
 
@@ -116,6 +117,10 @@ def main(argv=None):
 
     writer = Writer(args.format)
     path = p.path
+    # Keep the params next to the outputs: the grid is not saved (no _s.dat), and
+    # test/test_rho.py rebuilds the point radii from this copy.
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    shutil.copyfile(args.params, path + "_params.dat")
     writer.submit(path + "_init", order.to_cpp(rho))
     print(f"  init: {sim.stats(rho)}")
 

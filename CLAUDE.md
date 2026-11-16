@@ -41,7 +41,7 @@ Python scripts in `test/` validate output data files. They require numpy (and ma
 ```bash
 python test_projection.py [simulation_name] [data_path]
 python test_neighbour.py [simulation_name] [data_path]
-python test_rho.py [simulation_name] [data_path]
+python test_rho.py ../data/<path-prefix> [--variance] [--volume X_s.dat | --params params.dat]   # C++ (.dat) and cubicsphere (.npy/.dat) output
 python test_diffusion.py [simulation_name] [data_path]
 ```
 

@@ -20,7 +20,7 @@ python -m venv ~/venvs/cubic-jax && ~/venvs/cubic-jax/bin/pip install -e ".[cuda
 | not converged / NaN | runs all 1000 iterations, keeps going | stops with an error | `--on-fail continue` |
 | centre sink `rho[(n−1)/2] = 0` | always (arbitrary point in the crown model; uninitialised index when the grid is created) | hypercube model only | `--center-sink on` |
 | storage | point list + 33 neighbours + 16 projection entries per point | dense 8⁴ bricks, neighbours and projection computed on the fly | – |
-| output | text `_r.dat` | float32 `_r.npy`, same point order | `--format text` |
+| output | text `_r.dat` | float32 `_r.npy`, same point order, plus `<path>_params.dat` (copy of the params; `test/test_rho.py` rebuilds the point radii from it) | `--format text` |
 | `_s/_n/_p.dat` | written on creation | not needed, not written | – |
 | precision | float storage, double arithmetic | float32 (`--dtype float64` for checks) | – |
 
