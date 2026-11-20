@@ -13,10 +13,10 @@ python -m venv ~/venvs/cubic-jax && ~/venvs/cubic-jax/bin/pip install -e ".[cuda
 ## Differences from the C++
 
 | | C++ | JAX default | C++ behaviour |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | coefficients `D_i`, `D_ij` and drift | raw grid coordinates `p ≈ (2,2,2,2) ± 1` | `x = p − center` | `--raw-coords` |
 | linear solve of CN | fixed point `x ← rhs + αLx` | Jacobi `x ← x + (rhs + αLx − x)/(1 − αL_diag)` | `--solver fixed-point` |
-| stopping test | `max|Δx| < 1e-3` (absolute) | `max|Δx| ≤ 1e-5 · max|x|` | `--atol 1e-3 --rtol 0` |
+| stopping test | `max\|Δx\| < 1e-3` (absolute) | `max\|Δx\| ≤ 1e-5 · max\|x\|` | `--atol 1e-3 --rtol 0` |
 | not converged / NaN | runs all 1000 iterations, keeps going | stops with an error | `--on-fail continue` |
 | centre sink `rho[(n−1)/2] = 0` | always (arbitrary point in the crown model; uninitialised index when the grid is created) | hypercube model only | `--center-sink on` |
 | storage | point list + 33 neighbours + 16 projection entries per point | dense 8⁴ bricks, neighbours and projection computed on the fly | – |
@@ -37,7 +37,7 @@ spectral radius of `αL` is < 1, and it grows like `α/h² · |x|²`. Measured w
 `--estimate-spectrum` on the h = 0.05 grid (`sim_2`):
 
 | deltaT | fixed point, raw (C++) | fixed point, centred | Jacobi, centred |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 1e-5 | 0.55 | 0.026 | 0.013 |
 | 1e-4 | **5.5** | 0.26 | 0.11 |
 | 1e-3 | 55 | **2.6** | 0.54 |
