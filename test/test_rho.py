@@ -59,23 +59,33 @@ class Volume:
         self.counts = counts[self.bins]
         self.radii = self.bins / RES
 
-    def radial(self, rho):
-        """Per distinct radius: sum, mean and (population) std of rho. Also the number of
-        non-finite values, which are counted as 0."""
+    def radial(self, rho, negatives="clip"):
+        """Per distinct radius: weight, mean and (population) std of rho.
+
+        ``weight`` is the radial distribution used for the mean radius and its variance.
+        Negative rho (the discretisation is not sign-preserving) would give negative
+        weights and bias both, so ``negatives`` chooses how they enter the weight:
+        ``clip`` (max(rho, 0)), ``abs`` (|rho|) or ``keep`` (signed, as before). ``mean`` and
+        ``std`` always use the raw values. Also returns the signed mass, the mass of the
+        negative values and the number of non-finite values (counted as 0)."""
         s1 = np.zeros(self.size)
+        sw = np.zeros(self.size)
         s2 = np.zeros(self.size)
+        neg = 0.0
         bad = 0
         for i, k in enumerate(self.chunks):
             r = np.asarray(rho[self.offsets[i]:self.offsets[i + 1]], dtype=np.float64)
             finite = np.isfinite(r)
             bad += int(r.size - finite.sum())
             r = np.where(finite, r, 0.0)
+            neg += float(r[r < 0.0].sum())
+            w = {"clip": np.maximum(r, 0.0), "abs": np.abs(r), "keep": r}[negatives]
             s1 += np.bincount(k, weights=r, minlength=self.size)
+            sw += np.bincount(k, weights=w, minlength=self.size)
             s2 += np.bincount(k, weights=r * r, minlength=self.size)
-        total = s1[self.bins]
-        mean = total / self.counts
+        mean = s1[self.bins] / self.counts
         std = np.sqrt(np.clip(s2[self.bins] / self.counts - mean**2, 0.0, None))
-        return total, mean, std, bad
+        return sw[self.bins], mean, std, float(s1.sum()), neg, bad
 
 
 def volume_from_surface(path, center):
@@ -195,17 +205,16 @@ def find_snapshots(prefix):
 
 
 # ------------------------------------------------------------------- analysis
-def analyse(vol, rho, png, title):
-    """Prints a summary, saves the 3-panel plot and returns (mean radius, variance, mass)."""
+def analyse(vol, rho, png, title, negatives="clip"):
+    """Prints a summary, saves the 3-panel plot and returns (mean radius, variance, mass, negative mass)."""
     if len(rho) != vol.n:
         raise SystemExit(
             f"{title}: rho has {len(rho)} points but the point set has {vol.n} "
             "(wrong --volume/--params for this simulation?)"
         )
     r = vol.radii
-    total, mean, std, bad = vol.radial(rho)
+    total, mean, std, mass, negmass, bad = vol.radial(rho, negatives)
     finite = np.asarray(rho)[np.isfinite(rho)] if bad else np.asarray(rho)
-    mass = float(total.sum())
     print(
         f"{vol.n} points, sum {mass:.8g}, min {finite.min() if finite.size else np.nan:.4g}, "
         f"max {finite.max() if finite.size else np.nan:.4g}, "
@@ -213,12 +222,16 @@ def analyse(vol, rho, png, title):
     )
     if bad:
         print(f"  WARNING: {bad} non-finite values (NaN/inf), counted as 0")
-    if bad == vol.n or mass == 0.0:
+    if negmass < 0.0:
+        print(f"  negative rho: mass {negmass:.4g} ({-negmass / max(mass - negmass, 1e-300):.2%} of the positive "
+              f"mass); radial weights: '{negatives}'")
+    wsum = total.sum()
+    if bad == vol.n or wsum == 0.0:
         print("  no mass: plot skipped")
-        return np.nan, np.nan, mass
+        return np.nan, np.nan, mass, negmass
 
-    m = np.sum(r * total) / mass
-    v = np.sum((r - m) ** 2 * total) / mass
+    m = np.sum(r * total) / wsum
+    v = np.sum((r - m) ** 2 * total) / wsum
 
     # first radius of the all-zero tail of the radial distribution (4 if there is none)
     nonzero = np.nonzero(np.abs(total) > 1e-5)[0]
@@ -233,7 +246,7 @@ def analyse(vol, rho, png, title):
 
     fig, axs = plt.subplots(1, 3, figsize=(12, 6))
     axs[0].bar(r[:stop], total[:stop], width=0.02)
-    axs[0].set_ylabel("rho")
+    axs[0].set_ylabel("rho" if negatives == "keep" else f"rho ({negatives} of negatives)")
     axs[0].set_xlabel("radius")
     axs[0].set_title("Rho distribution")
     axs[0].text(0.95, 0.95, f"{mrho}\n{m}\n{v}", ha="right", va="top", transform=axs[0].transAxes)
@@ -252,7 +265,7 @@ def analyse(vol, rho, png, title):
     fig.suptitle(title)
     fig.savefig(png)
     plt.close(fig)
-    return m, v, mass
+    return m, v, mass, negmass
 
 
 def main():
@@ -260,6 +273,9 @@ def main():
     ap.add_argument("simulation", help="simulation path with prefix, e.g. ../data/radial6_08")
     ap.add_argument("--variance", action="store_true",
                     help="also plot the variance of the radial distribution vs step (<prefix>_variance.pdf)")
+    ap.add_argument("--negatives", choices=("clip", "abs", "keep"), default="clip",
+                    help="how negative rho enters the radial distribution (mean radius, variance): "
+                         "clip = max(rho, 0) (default), abs = |rho|, keep = signed")
     ap.add_argument("--volume", help="C++ surface file (X_s.dat) or its prefix X, with the point coordinates")
     ap.add_argument("--params", help="params file of the run; the point set is regenerated from it")
     ap.add_argument("--center", type=float, default=2.0,
@@ -277,18 +293,18 @@ def main():
     rows = []
     for label, step, path in snaps:
         print(f"\n\nTesting {path}")
-        m, v, mass = analyse(vol, read_rho(path), path.with_suffix(".png"), path.stem[:-2])
-        rows.append((label, step, m, v, mass))
+        m, v, mass, neg = analyse(vol, read_rho(path), path.with_suffix(".png"), path.stem[:-2], args.negatives)
+        rows.append((label, step, m, v, mass, neg))
 
     stats = Path(str(prefix) + "_radial_stats.csv")
     with open(stats, "w") as f:
         f.write("snapshot,step,mean_radius,variance,mass\n")
-        for label, step, m, v, mass in rows:
+        for label, step, m, v, mass, neg in rows:
             f.write(f"{label},{'' if step is None else step},{m},{v},{mass}\n")
     print(f"\nWrote {stats}")
 
     if args.variance:
-        evol = [(s, v) for _, s, _, v, _ in rows if s is not None]  # as before, the evolved row is left out
+        evol = [(s, v) for _, s, _, v, _, _ in rows if s is not None]  # as before, the evolved row is left out
         fig, ax = plt.subplots(1, 1)
         ax.plot([s for s, _ in evol], [v for _, v in evol], "b.-", label=prefix.name)
         ax.set_xlabel("step")
